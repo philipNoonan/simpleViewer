@@ -24,8 +24,7 @@ Ubuntu:~/$ ./vcpkg integrate install
 
 <p>On windows, set the default install target to x64-windows by setting environment variables </p>
 <pre><code>PS&gt;
-set VCPKG_DEFAULT_TRIPLET=x64-windows
-setx VCPKG_DEFAULT_TRIPLET=x64-windows
+setx VCPKG_DEFAULT_TRIPLET "x64-windows" /m
 </code></pre>
 
 <p>Install the required packages with </p>
