@@ -1,0 +1,113 @@
+cmake_minimum_required(VERSION 3.9)
+set(CMAKE_TOOLCHAIN_FILE "C:/Code/vcpkg/scripts/buildsystems/vcpkg.cmake")
+
+
+project(simpleViewer)
+
+
+# Save the command line compile commands in the build output
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+
+# c++17 required for filesystem
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+include(BasicConfig)
+
+
+
+file(GLOB_RECURSE SRC "src/*")
+file(GLOB_RECURSE GFX "graphics/*")
+file(GLOB_RECURSE SHD "shaders/*")
+file(GLOB_RECURSE HDR "include/*")
+file(GLOB_RECURSE RES "resources/*")
+
+
+list(APPEND SRC ${SHD})
+list(APPEND SRC ${GFX})
+list(APPEND SRC ${HDR})
+list(APPEND SRC ${RES})
+
+find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED)
+find_package(glfw3 REQUIRED)
+find_package(glm REQUIRED)
+find_package(imgui REQUIRED)
+find_package(vtk REQUIRED)
+
+### COPY SHADER FILES TO BUILD AND BINARY LOCATIONS IF THEY HAVE BEEN CHANGED ###
+add_custom_target(
+  shaders ALL
+  DEPENDS ${SHD}
+  COMMENT "Copying shader files"
+  VERBATIM
+)
+foreach(ShaderFile ${SHD})
+get_filename_component(ShaderName ${ShaderFile} NAME)
+	add_custom_command(
+		TARGET shaders
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E copy_if_different
+			${ShaderFile}
+			${PROJECT_BINARY_DIR}/bin/$(Configuration)/shaders/${ShaderName}
+	)
+		add_custom_command(
+		TARGET shaders
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E copy_if_different
+			${ShaderFile}
+			${PROJECT_BINARY_DIR}/shaders/${ShaderName}
+	)
+endforeach()
+
+### COPY RESOURCES FILES TO BUILD AND BINARY LOCATIONS IF THEY HAVE BEEN CHANGED ###
+add_custom_target(
+  resources ALL
+  DEPENDS ${RES}
+  COMMENT "Copying resources files"
+  VERBATIM
+)
+foreach(ResourceFile ${RES})
+get_filename_component(ResourceName ${ResourceFile} NAME)
+	add_custom_command(
+		TARGET resources
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E copy_if_different
+			${ResourceFile}
+			${PROJECT_BINARY_DIR}/bin/$(Configuration)/resources/${ResourceName}
+	)
+		add_custom_command(
+		TARGET resources
+		COMMAND ${CMAKE_COMMAND}
+		ARGS -E copy_if_different
+			${ResourceFile}
+			${PROJECT_BINARY_DIR}/resources/${ResourceName}
+	)
+endforeach()
+
+file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/bin/Debug/data/meshes)
+file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/bin/Release/data/meshes)
+file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/data/meshes)
+
+
+add_executable(${PROJECT_NAME} ${SRC})
+add_dependencies(${PROJECT_NAME} shaders resources)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_PDB_NAME_DEBUG "${PROJECT_NAME}${CMAKE_DEBUG_POSTFIX}")
+
+#set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
+#ADD_DEFINITIONS(-DUNICODE)
+#ADD_DEFINITIONS(-D_UNICODE)
+
+target_include_directories(${PROJECT_NAME} PUBLIC "include")
+target_include_directories(${PROJECT_NAME} PUBLIC "graphics")
+
+target_link_libraries(${PROJECT_NAME} ${OPENGL_gl_LIBRARY})
+target_link_libraries(${PROJECT_NAME} GLEW::GLEW)
+target_link_libraries(${PROJECT_NAME} glfw)
+target_link_libraries(${PROJECT_NAME} glm)
+target_link_libraries(${PROJECT_NAME} imgui::imgui)
+target_link_libraries(${PROJECT_NAME} ${VTK_LIBRARIES} )
