@@ -29,7 +29,7 @@ layout(std430, binding = 0) buffer posBuf
 
 // uniforms
 uniform int baseLevel;
-uniform float isoValue = 1000.0f;
+uniform float isoLevel;
 uniform uint totalSum;
 
 uniform uvec4 cubeOffsets[8] = {
@@ -174,6 +174,7 @@ bool traverseHPLevel()
         ivec3 point1 = ivec3(cubePosition.x + texelFetch(offsets3, edge * 6 + 3, 0).x, cubePosition.y + texelFetch(offsets3, edge * 6 + 4, 0).x, cubePosition.z + texelFetch(offsets3, edge * 6 + 5, 0).x);
 
 
+
         //// Store vertex in VBO
 
         //vec3 forwardDifference0 = vec3(
@@ -188,17 +189,32 @@ bool traverseHPLevel()
         //        (-texelFetch(volumeFloatTexture, ivec3(point1.x, point1.y, point1.z + 1), 0).x + texelFetch(volumeFloatTexture, ivec3(point1.x, point1.y, point1.z - 1), 0).x)
         //    );
 
+
         float value0 = texelFetch(volumeFloatTexture, ivec3(point0.x, point0.y, point0.z), 0).x;
-        float diff = (isoValue - value0) / (texelFetch(volumeFloatTexture, ivec3(point1.x, point1.y, point1.z), 0).x - value0);
+
+        float testVal1 = texelFetch(volumeFloatTexture, ivec3(point1.x, point1.y, point1.z), 0).x;
+
+        
+        float diff;
+
+        //if (isoLevel - value0 < 0)
+        //{
+            diff = (isoLevel - value0) / (testVal1 - value0);
+        //}
+        //else
+        //{
+        //    diff = 0.5f;
+        //}
 
 
-        // THIS FIX IS BECAUSE SOMETHING IS DIVIDNG BY ZERO AND FUCKING UP
-        if (diff > 1 || diff < 0)
-        {
-            diff = 0.5;
-        }
+
+        // THIS FIX IS BECAUSE SOMETHING IS DIVIDNG BY ZERO AND FUCKING UP or a massive number
+        //if (diff > 1 || diff < 0)
+        //{
+        //    diff = 0.5;
+        //}
         // 0.5 ==== diff
-        const vec3 vertex = mix(vec3(point0.x, point0.y, point0.z), vec3(point1.x, point1.y, point1.z), diff);
+        const vec3 vertex = mix(vec3(point0.x, point0.y, point0.z), vec3(point1.x, point1.y, point1.z), diff); // * scaing of voxels
         //const vec3 normal = mix(forwardDifference0, forwardDifference1, diff);
 
 

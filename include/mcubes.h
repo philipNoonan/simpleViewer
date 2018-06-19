@@ -98,6 +98,7 @@ private:
 
 	GLuint m_totalSumID;
 	GLuint m_baseLevelID;
+	GLuint m_isoLevel_TravID;
 
 	// prefix sum
 	GLuint m_prefixSumSubroutineID;

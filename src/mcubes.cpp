@@ -47,6 +47,7 @@ void MCubes::setLocations()
 	m_traverseHistoPyramidsSubroutineID = glGetSubroutineUniformLocation(traverseHistoPyramidsProg.getHandle(), GL_COMPUTE_SHADER, "traverseHistoPyramidsSubroutine");
 	m_traverseHPLevelID = glGetSubroutineIndex(traverseHistoPyramidsProg.getHandle(), GL_COMPUTE_SHADER, "traverseHPLevel");
 	m_totalSumID = glGetUniformLocation(traverseHistoPyramidsProg.getHandle(), "totalSum");
+	m_isoLevel_TravID = glGetUniformLocation(traverseHistoPyramidsProg.getHandle(), "isoLevel");
 
 
 	// PREFIX SUMS
@@ -332,6 +333,7 @@ void MCubes::histoPyramids()
 	nthreads = GLHelper::divup(glm::uvec3(sumData[0], 1, 1), glm::uvec3(32, 1, 1));
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &m_traverseHPLevelID);
 	glUniform1ui(m_totalSumID, sumData[0]);
+	glUniform1f(m_isoLevel_TravID, m_isoLevel);
 
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_bufferPos);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_bufferNorm);
