@@ -33,6 +33,9 @@ void MCubes::compileAndLinkShader()
 		std::cerr << e.what() << std::endl;
 		exit(EXIT_FAILURE);
 	}
+
+	glGenQueries(2, query);
+
 }
 void MCubes::setLocations()
 {
@@ -41,7 +44,7 @@ void MCubes::setLocations()
 	m_histoPyramidsSubroutineID = glGetSubroutineUniformLocation(histoPyramidsProg.getHandle(), GL_COMPUTE_SHADER, "histoPyramidsSubroutine");
 	m_classifyCubesID = glGetSubroutineIndex(histoPyramidsProg.getHandle(), GL_COMPUTE_SHADER, "classifyCubes");
 	m_constructHPLevelID = glGetSubroutineIndex(histoPyramidsProg.getHandle(), GL_COMPUTE_SHADER, "constructHPLevel");
-	m_baseLevelID = glGetUniformLocation(histoPyramidsProg.getHandle(), "baseLevel");
+	m_baseLevelID = glGetUniformLocation(histoPyramidsProg.getHandle(), "hpLevel");
 	m_isoLevelID = glGetUniformLocation(histoPyramidsProg.getHandle(), "isoLevel");
 
 	m_traverseHistoPyramidsSubroutineID = glGetSubroutineUniformLocation(traverseHistoPyramidsProg.getHandle(), GL_COMPUTE_SHADER, "traverseHistoPyramidsSubroutine");
@@ -79,7 +82,7 @@ void MCubes::allocateTextures()
 {
 	// MARCHING CUBES TEXTURES
 	// SHOULD WE PAD TO POWERS OF TWO TEXTURE SIZES?
-	m_textureHistoPyramid = GLHelper::createTexture(m_textureHistoPyramid, GL_TEXTURE_3D, 10, 512, 512, 512, GL_R32UI); // texture is define as R32UI however level 0 will be read in shader as rg16ui https://www.khronos.org/opengl/wiki/Image_Load_Store#Format_conversion
+	m_textureHistoPyramid = GLHelper::createTexture(m_textureHistoPyramid, GL_TEXTURE_3D, 10, 512, 512, 512, GL_R32F); // texture is define as R32UI however level 0 will be read in shader as rg16ui https://www.khronos.org/opengl/wiki/Image_Load_Store#Format_conversion
 	m_textureEdgeTable = GLHelper::createTexture(m_textureEdgeTable, GL_TEXTURE_1D, 1, 256, 1, 1, GL_R16UI);
 	m_textureTriTable = GLHelper::createTexture(m_textureTriTable, GL_TEXTURE_1D, 1, 256 * 16, 1, 1, GL_R16UI);
 	m_textureNumVertsTable = GLHelper::createTexture(m_textureNumVertsTable, GL_TEXTURE_1D, 1, 256, 1, 1, GL_R16UI);
@@ -87,7 +90,10 @@ void MCubes::allocateTextures()
 	m_textureNrOfTriangles = GLHelper::createTexture(m_textureNrOfTriangles, GL_TEXTURE_1D, 1, 256, 1, 1, GL_R8UI);
 	m_textureOffsets3 = GLHelper::createTexture(m_textureOffsets3, GL_TEXTURE_1D, 1, 72, 1, 1, GL_R8UI);
 
-
+	//texture views
+	// https://www.khronos.org/opengl/wiki/Texture_Storage#Texture_views
+	glGenTextures(1, &m_textureviewHistoPyramid);
+	glTextureView(m_textureviewHistoPyramid, GL_TEXTURE_3D, m_textureHistoPyramid, GL_RG16F, 0, 1, 0, 1);
 
 }
 void MCubes::allocateBuffers()
@@ -205,12 +211,12 @@ void MCubes::histoPyramids()
 {
 
 
+	glBeginQuery(GL_TIME_ELAPSED, query[0]);
 
 	histoPyramidsProg.use();
 
 	/// Classify cubes
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_3D, m_textureHistoPyramid);
+
 
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_3D, m_textureVolume);
@@ -228,7 +234,7 @@ void MCubes::histoPyramids()
 	glBindTexture(GL_TEXTURE_1D, m_textureOffsets3);
 
 	// https://stackoverflow.com/questions/30110521/format-conversions-in-opengl-images
-	glBindImageTexture(2, m_textureHistoPyramid, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RG16UI); 
+	glBindImageTexture(2, m_textureHistoPyramid, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RG16F); 
 	glm::uvec3 nthreads = GLHelper::divup(glm::uvec3(512, 512, 512), glm::uvec3(32, 32, 1));
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &m_classifyCubesID);
 	glUniform1f(m_isoLevelID, m_isoLevel);
@@ -240,28 +246,34 @@ void MCubes::histoPyramids()
 
 
 	/// Do first level of histoprys
-	glBindImageTexture(2, m_textureHistoPyramid, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RG16UI);
-	glBindImageTexture(1, m_textureHistoPyramid, 1, GL_TRUE, 0, GL_WRITE_ONLY, GL_R32UI);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_3D, m_textureviewHistoPyramid); // texture view on first level
+
+	glBindImageTexture(2, m_textureHistoPyramid, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RG16F);
+	glBindImageTexture(1, m_textureHistoPyramid, 1, GL_TRUE, 0, GL_WRITE_ONLY, GL_R32F);
 	nthreads = GLHelper::divup(glm::uvec3(512 / 2, 512 / 2, 512 / 2), glm::uvec3(32, 32, 1));
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &m_constructHPLevelID);
-	glUniform1i(m_baseLevelID, 1);
+	glUniform1i(m_baseLevelID, 0);
 
 	glDispatchCompute(nthreads.x, nthreads.y, nthreads.z);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 
-
+	// swap to r32f texture
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_3D, m_textureHistoPyramid);
 
 	/// Do other levels of histopyr
 	for (int i = 1; i < 9; i++)
 	{
 		// https://stackoverflow.com/questions/17015132/compute-shader-not-modifying-3d-texture
-		glBindImageTexture(0, m_textureHistoPyramid, i, GL_TRUE, 0, GL_READ_ONLY, GL_R32UI);
-		glBindImageTexture(1, m_textureHistoPyramid, i+1, GL_TRUE, 0, GL_WRITE_ONLY, GL_R32UI); // bind point 1 in shader, level 1 in pyr volume
+		glBindImageTexture(0, m_textureHistoPyramid, i, GL_TRUE, 0, GL_READ_ONLY, GL_R32F);
+		glBindImageTexture(1, m_textureHistoPyramid, i+1, GL_TRUE, 0, GL_WRITE_ONLY, GL_R32F); // bind point 1 in shader, level 1 in pyr volume
 		
 		glm::uvec3 nthreads = GLHelper::divup(glm::uvec3((512 >> i ) / 2, (512 >> i) / 2, (512 >> i) / 2), glm::uvec3(32, 32, 1));
 		glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &m_constructHPLevelID);
-		glUniform1i(m_baseLevelID, 0);
+		glUniform1i(m_baseLevelID, i);
 
 		glDispatchCompute(nthreads.x, nthreads.y, nthreads.z);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
@@ -283,11 +295,11 @@ void MCubes::histoPyramids()
 
 
 	/// Read top of pyramid to get total number of triangles in volume
-	std::vector<uint32_t> sumData((512 >> 9) * (512 >> 9) * (512 >> 9), 3);
+	std::vector<float> sumData((512 >> 9) * (512 >> 9) * (512 >> 9), 3);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_3D, m_textureHistoPyramid);
-	glGetTexImage(GL_TEXTURE_3D, 9, GL_RED_INTEGER, GL_UNSIGNED_INT, sumData.data());
+	glGetTexImage(GL_TEXTURE_3D, 9, GL_RED, GL_FLOAT, sumData.data());
 	glBindTexture(GL_TEXTURE_3D, 0);
 	glActiveTexture(0);
 
@@ -329,7 +341,7 @@ void MCubes::histoPyramids()
 
 
 	/// Traverse HP level
-	glBindImageTexture(2, m_textureHistoPyramid, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RG16UI);
+	glBindImageTexture(2, m_textureHistoPyramid, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RG16F);
 	nthreads = GLHelper::divup(glm::uvec3(sumData[0], 1, 1), glm::uvec3(32, 1, 1));
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &m_traverseHPLevelID);
 	glUniform1ui(m_totalSumID, sumData[0]);
@@ -378,7 +390,17 @@ void MCubes::histoPyramids()
 	//	outFile << point[0] << " " << point[1] << " " << point[2] << std::endl;
 	//}
 
+	glEndQuery(GL_TIME_ELAPSED);
+	GLuint available = 0;
+	while (!available) {
+		glGetQueryObjectuiv(query[0], GL_QUERY_RESULT_AVAILABLE, &available);
+	}
+	// elapsed time in nanoseconds
+	GLuint64 elapsed;
+	glGetQueryObjectui64vEXT(query[0], GL_QUERY_RESULT, &elapsed);
+	auto hpTime = elapsed / 1000000.0;
 
+	std::cout << "elapsed time : " << hpTime << std::endl;
 
 }
 

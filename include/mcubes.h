@@ -125,6 +125,7 @@ private:
 	// textures
 	GLuint m_textureVolume;
 	GLuint m_textureHistoPyramid;
+	GLuint m_textureviewHistoPyramid;
 	GLuint m_textureEdgeTable;
 	GLuint m_textureTriTable;
 	GLuint m_textureNumVertsTable;
@@ -156,7 +157,7 @@ private:
 
 	//inline int divup(int a, int b) { return (a % b != 0) ? (a / b + 1) : (a / b); }
 
-
+	GLuint query[2];
 
 
 	uint32_t m_totalVerts;

@@ -3,18 +3,19 @@
 layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 
 // images
-layout(binding = 0, r32ui) uniform uimage3D volumeData;
-layout(binding = 1, r32ui) uniform uimage3D volumeDataOutput;
-layout(binding = 2, rg16ui) uniform uimage3D histoPyramidBaseLevel;
+layout(binding = 0, r32f) uniform image3D volumeData;
+layout(binding = 1, r32f) uniform image3D volumeDataOutput;
+layout(binding = 2, rg16f) uniform image3D histoPyramidBaseLevel;
 
 // textures
-layout(binding = 0) uniform usampler3D histoPyramidTexture; 
+layout(binding = 0) uniform sampler3D histoPyramidTexture; 
 layout(binding = 1) uniform sampler3D volumeFloatTexture; 
 
 layout(binding = 3) uniform usampler1D edgeTable;
 layout(binding = 4) uniform usampler1D triTable;
 layout(binding = 5) uniform usampler1D nrOfTrianglesTable;
 layout(binding = 6) uniform usampler1D offsets3;
+
 
 // buffers 
 layout(std430, binding = 0) buffer posBuf
@@ -54,27 +55,27 @@ void scanHPLevel(uint target, int lod, inout uvec4 current)
 
     if (lod == 0)
     {
-        neighbors[0] = imageLoad(histoPyramidBaseLevel, ivec3(current.xyz)).x;
-        neighbors[1] = imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[1].xyz)).x;
-        neighbors[2] = imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[2].xyz)).x;
-        neighbors[3] = imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[3].xyz)).x;
-
-        neighbors[4] = imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[4].xyz)).x;
-        neighbors[5] = imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[5].xyz)).x;
-        neighbors[6] = imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[6].xyz)).x;
-        neighbors[7] = imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[7].xyz)).x;
+        neighbors[0] = uint(imageLoad(histoPyramidBaseLevel, ivec3(current.xyz)).x);
+        neighbors[1] = uint(imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[1].xyz)).x);
+        neighbors[2] = uint(imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[2].xyz)).x);
+        neighbors[3] = uint(imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[3].xyz)).x);
+                                                                                                              
+        neighbors[4] = uint(imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[4].xyz)).x);
+        neighbors[5] = uint(imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[5].xyz)).x);
+        neighbors[6] = uint(imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[6].xyz)).x);
+        neighbors[7] = uint(imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[7].xyz)).x);
     }
     else if (lod > 0)
     {
-        neighbors[0] = texelFetch(histoPyramidTexture, ivec3(current.xyz), lod).x;
-        neighbors[1] = texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[1].xyz), lod).x;
-        neighbors[2] = texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[2].xyz), lod).x;
-        neighbors[3] = texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[3].xyz), lod).x;
-
-        neighbors[4] = texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[4].xyz), lod).x;
-        neighbors[5] = texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[5].xyz), lod).x;
-        neighbors[6] = texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[6].xyz), lod).x;
-        neighbors[7] = texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[7].xyz), lod).x;
+        neighbors[0] = uint(texelFetch(histoPyramidTexture, ivec3(current.xyz), lod).x);
+        neighbors[1] = uint(texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[1].xyz), lod).x);
+        neighbors[2] = uint(texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[2].xyz), lod).x);
+        neighbors[3] = uint(texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[3].xyz), lod).x);
+                                                                                                                  
+        neighbors[4] = uint(texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[4].xyz), lod).x);
+        neighbors[5] = uint(texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[5].xyz), lod).x);
+        neighbors[6] = uint(texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[6].xyz), lod).x);
+        neighbors[7] = uint(texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[7].xyz), lod).x);
     }
 
 
@@ -164,7 +165,7 @@ bool traverseHPLevel()
     int vertexNr = 0;
 
     //uvec4 cubeData = texelFetch(histoPyramidTexture, ivec3(cubePosition.xyz), 0);
-    uint cubeIndex = imageLoad(histoPyramidBaseLevel, ivec3(cubePosition.xyz)).y;
+    uint cubeIndex = uint(imageLoad(histoPyramidBaseLevel, ivec3(cubePosition.xyz)).y);
 
     // max 5 triangles 
     for (int i = int(target - cubePosition.w) * 3; i < int(target - cubePosition.w + 1) * 3; i++)
@@ -197,23 +198,9 @@ bool traverseHPLevel()
         
         float diff;
 
-        //if (isoLevel - value0 < 0)
-        //{
-            diff = (isoLevel - value0) / (testVal1 - value0);
-        //}
-        //else
-        //{
-        //    diff = 0.5f;
-        //}
 
-
-
-        // THIS FIX IS BECAUSE SOMETHING IS DIVIDNG BY ZERO AND FUCKING UP or a massive number
-        //if (diff > 1 || diff < 0)
-        //{
-        //    diff = 0.5;
-        //}
-        // 0.5 ==== diff
+        diff = (isoLevel - value0) / (testVal1 - value0);
+ 
         const vec3 vertex = mix(vec3(point0.x, point0.y, point0.z), vec3(point1.x, point1.y, point1.z), diff); // * scaing of voxels
         //const vec3 normal = mix(forwardDifference0, forwardDifference1, diff);
 
