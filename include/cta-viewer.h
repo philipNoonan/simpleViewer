@@ -2,6 +2,7 @@
 #include "loader.h"
 #include "mcubes.h"
 #include "raycaster.h"
+#include "octree.h"
 
 //#include "camera.hpp"
 
@@ -29,6 +30,8 @@ mCubeConfig mcconfig;
 
 RCaster rcaster;
 
+Octree octree;
+
 //Camera camera;
 
 GLFWwindow * window;
@@ -36,6 +39,7 @@ GLFWwindow * window;
 void setVolume();
 
 int m_level = 0;
+int m_cutoff = 0;
 float m_x_slice = 0.5f;
 float m_y_slice = 0.5f;
 float m_z_slice = 0.5f;
@@ -46,8 +50,10 @@ glm::vec3 rotation = glm::vec3();
 glm::vec3 cameraPos = glm::vec3();
 glm::vec2 mousePos = glm::vec2();
 
+bool renderOrtho = true;
 bool performRaytrace = false;
 bool performMarchingCubes = false;
+bool performOctree = false;
 
 std::vector<std::filesystem::path> imageFiles;
 string imageVolumeFileName;

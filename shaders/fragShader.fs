@@ -43,7 +43,14 @@ subroutine(getColor)
 vec4 fromVertexArray()
 {
 	//vec4 tData = 0.0001f * textureLod(currentTexture3D, vec3(TexCoord3D.x, TexCoord3D.y, TexCoord3D.z), float(level) );
-	return vec4(0.95f, 0.12f, 0.05f, 1.0f); 
+    if (TexCoord3D.x < 0)
+    {
+	    return vec4(0.12f, 0.92f, 0.05f, 0.1f); 
+    }
+    else
+    {
+	    return vec4(0.95f, 0.12f, 0.05f, 0.1f); 
+    }
 
 }
 

@@ -52,6 +52,10 @@ void Render::compileAndLinkShader()
 
 void Render::setLocations()
 {
+	m_ViewID = glGetUniformLocation(renderProg.getHandle(), "view");
+	m_ProjectionID = glGetUniformLocation(renderProg.getHandle(), "projection");
+	m_ModelID = glGetUniformLocation(renderProg.getHandle(), "model");
+
 	m_MvpID = glGetUniformLocation(renderProg.getHandle(), "MVP");
 	m_imSizeID = glGetUniformLocation(renderProg.getHandle(), "imSize");
 	m_sliceID = glGetUniformLocation(renderProg.getHandle(), "slice");
@@ -62,6 +66,10 @@ void Render::setLocations()
 	m_standardTextureID = glGetSubroutineIndex(renderProg.getHandle(), GL_VERTEX_SHADER, "fromStandardTexture");
 	m_standardTexture3DID = glGetSubroutineIndex(renderProg.getHandle(), GL_VERTEX_SHADER, "fromStandardTexture3D");
 	m_standardTextureMCID = glGetSubroutineIndex(renderProg.getHandle(), GL_VERTEX_SHADER, "fromStandardTextureMC");
+	m_octlistID = glGetSubroutineIndex(renderProg.getHandle(), GL_VERTEX_SHADER, "fromOctlist");
+
+
+
 	m_colorSelectionRoutineID = glGetSubroutineUniformLocation(renderProg.getHandle(), GL_FRAGMENT_SHADER, "getColorSelection");
 	m_fromVolumeID = glGetSubroutineIndex(renderProg.getHandle(), GL_FRAGMENT_SHADER, "fromVolume");
 	m_fromTexture2DID = glGetSubroutineIndex(renderProg.getHandle(), GL_FRAGMENT_SHADER, "fromTexture2D");
@@ -136,6 +144,52 @@ void Render::setVertPositions()
 
 	m_vertices3D = orthoVerts;
 
+	std::vector<float> cubeOffsets = {
+		0.0f, 0.0f, 0.0f, 
+		1.0f, 0.0f, 0.0f, 
+		1.0f, 1.0f, 0.0f, 
+		1.0f, 1.0f, 0.0f, 
+		0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f,
+
+		0.0f, 0.0f, 1.0f,
+		1.0f, 0.0f, 1.0f, 
+		1.0f, 1.0f, 1.0f, 
+		1.0f, 1.0f, 1.0f, 
+		0.0f, 1.0f, 1.0f,
+		0.0f, 0.0f, 1.0f,
+
+		0.0f, 1.0f, 1.0f,
+		0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f,
+		0.0f, 1.0f, 1.0f,
+
+		1.0f, 1.0f, 1.0f, 
+		1.0f, 1.0f, 0.0f, 
+		1.0f, 0.0f, 0.0f, 
+		1.0f, 0.0f, 0.0f, 
+		1.0f, 0.0f, 1.0f, 
+		1.0f, 1.0f, 1.0f, 
+
+		0.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f, 
+		1.0f, 0.0f, 1.0f, 
+		1.0f, 0.0f, 1.0f, 
+		0.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 0.0f,
+
+		0.0f, 1.0f, 0.0f,
+		1.0f, 1.0f, 0.0f, 
+		1.0f, 1.0f, 1.0f, 
+		1.0f, 1.0f, 1.0f, 
+		0.0f, 1.0f, 1.0f,
+		0.0f, 1.0f, 0.0f,
+	};
+
+	m_cubePoints = cubeOffsets ;
+
 }
 
 
@@ -177,6 +231,7 @@ void Render::allocateBuffers()
 	glGenVertexArrays(1, &m_VAO);
 	glGenBuffers(1, &m_VBO);
 	glGenBuffers(1, &m_VBO_3D);
+	glGenBuffers(1, &m_VBO_Oct);
 
 	glGenBuffers(1, &m_EBO);
 
@@ -212,7 +267,6 @@ void Render::allocateBuffers()
 
 
 
-
 	glBindVertexArray(0);
 
 
@@ -230,7 +284,22 @@ void Render::allocateBuffersFromMarchingCubes()
 	glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
 	glEnableVertexAttribArray(4);
 
+	// OCTRREE
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Oct);
+	glBufferData(GL_ARRAY_BUFFER, m_cubePoints.size() * sizeof(float), &m_cubePoints[0], GL_STATIC_DRAW);
+
+	glVertexAttribPointer(6, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (GLvoid*)0);
+	glEnableVertexAttribArray(6);
+
+	glEnableVertexAttribArray(7);
+	glBindBuffer(GL_ARRAY_BUFFER, m_bufferOctlist);
+	glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (GLvoid*)0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glVertexAttribDivisor(7, 1); // IMPORTANT https://learnopengl.com/Advanced-OpenGL/Instancing
+
+
+
+
 	glBindVertexArray(0);
 
 }
@@ -238,7 +307,7 @@ void Render::allocateBuffersFromMarchingCubes()
 
 void Render::allocateTextures()
 {
-	m_textureVolume = GLHelper::createTexture(m_textureVolume, GL_TEXTURE_3D, 10, 512, 512, 512, GL_R32F);
+	m_textureVolume = GLHelper::createTexture(m_textureVolume, GL_TEXTURE_3D, 1, 512, 512, 512, GL_R32F);
 }
 
 
@@ -251,16 +320,16 @@ void Render::uploadImageData(vtkSmartPointer<vtkImageData> imData)
 	//memcpy_s(m_inputImageVolume.data(), dims[0] * dims[1] * dims[2] * sizeof(float), imageData->GetScalarPointer(), dims[0] * dims[1] * dims[2] * sizeof(float));
 
 
-	//GLenum theErr;
+     GLenum theErr;
 
 	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	glBindTexture(GL_TEXTURE_3D, m_textureVolume);
 	glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, dims[0], dims[1], dims[2], GL_RED, GL_FLOAT, imData->GetScalarPointer());
-	//glGenerateMipmap(GL_TEXTURE_3D);
+	glGenerateMipmap(GL_TEXTURE_3D);
 	glBindTexture(GL_TEXTURE_3D, 0);
 
-	//theErr = glGetError();
+	theErr = glGetError();
 }
 
 
@@ -298,13 +367,12 @@ void Render::render()
 	m_model_color = glm::rotate(m_model_color, glm::radians(m_rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
 	m_model_color = glm::rotate(m_model_color, glm::radians(m_rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
 	m_model_color = glm::rotate(m_model_color, glm::radians(m_rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-
+	m_model = m_model_color;
 	glViewport(0, 0, w, h);
 
 	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	renderProg.use();
 	glm::mat4 MVP;
-
 
 	glm::vec3 imageSize;
 
@@ -312,27 +380,39 @@ void Render::render()
 	glm::vec3 sVals(0, 0, m_slice);
 	MVP = m_projection * m_view *m_model_color;
 	m_MV = m_view * m_model_color;
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 
 	glBindVertexArray(m_VAO);
+	if (m_renderOrtho)
+	{
 
-	glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_standardTexture3DID);
-	glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &m_fromVolumeID);
-	glUniformMatrix4fv(m_MvpID, 1, GL_FALSE, glm::value_ptr(MVP));
-	glUniform1i(m_levelID, m_level);
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
 
-	glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, 0);
+		glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_standardTexture3DID);
+		glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &m_fromVolumeID);
+		glUniformMatrix4fv(m_MvpID, 1, GL_FALSE, glm::value_ptr(MVP));
+		glUniform1i(m_levelID, m_level);
 
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, 0);
+	}
+
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 
 	if (m_renderMarchingCubes)
 	{
+		glEnableVertexAttribArray(4);
+		glBindBuffer(GL_ARRAY_BUFFER, m_bufferPos);
+
+		glBindBuffer(GL_ARRAY_BUFFER, m_bufferOctlist);
 		glUniformMatrix4fv(m_MvpID, 1, GL_FALSE, glm::value_ptr(MVP));
 		glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_standardTextureMCID);
 		glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &m_fromVertexArrayID);
-		glDrawArrays(GL_TRIANGLES, 0, m_numTrianglesMC * 3);
+		glDrawArrays(GL_TRIANGLES, 0, m_numTrianglesMC);
 	}
 
 	if (m_renderRaytrace)
@@ -343,7 +423,30 @@ void Render::render()
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	}
 
+	if (m_renderOctree)
+	{
 
+		glEnableVertexAttribArray(6);
+		glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Oct);
+
+		glEnableVertexAttribArray(7);
+		glBindBuffer(GL_ARRAY_BUFFER, m_bufferOctlist);
+
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+		// set projectiopn and view mat
+		glUniformMatrix4fv(m_ProjectionID, 1, GL_FALSE, glm::value_ptr(m_projection));
+		glUniformMatrix4fv(m_ViewID, 1, GL_FALSE, glm::value_ptr(m_view));
+		glUniformMatrix4fv(m_ModelID, 1, GL_FALSE, glm::value_ptr(m_model));
+
+
+		glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_octlistID);
+		glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &m_fromVertexArrayID);
+
+		glDrawArraysInstanced(GL_TRIANGLES, 0, 36, m_octlistCount);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	}
 	
 
 

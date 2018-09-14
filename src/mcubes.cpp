@@ -90,6 +90,8 @@ void MCubes::allocateTextures()
 	m_textureNrOfTriangles = GLHelper::createTexture(m_textureNrOfTriangles, GL_TEXTURE_1D, 1, 256, 1, 1, GL_R8UI);
 	m_textureOffsets3 = GLHelper::createTexture(m_textureOffsets3, GL_TEXTURE_1D, 1, 72, 1, 1, GL_R8UI);
 
+	//m_testVolumeTexture = GLHelper::createTexture(m_testVolumeTexture, GL_TEXTURE_3D, 10, 512, 512, 512, GL_R32F);
+
 	//texture views
 	// https://www.khronos.org/opengl/wiki/Texture_Storage#Texture_views
 	glGenTextures(1, &m_textureviewHistoPyramid);
@@ -100,7 +102,7 @@ void MCubes::allocateBuffers()
 {
 	// MARCHING CUBES BUFFERS
 	size_t memSize = sizeof(GLuint) * m_mcubeConfiguration.numVoxels;
-	size_t memSizeVec4 = sizeof(float) * 4 * m_mcubeConfiguration.maxVerts;
+	size_t memSizeVec4 = 10e8; // SET THIS PROPERLY ONCE AND DONT CHNAGE IT
 
 	/*glGenBuffers(1, &m_bufferVoxelVerts);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_bufferVoxelVerts);
@@ -124,7 +126,7 @@ void MCubes::allocateBuffers()
 
 	glGenBuffers(1, &m_bufferPos);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_bufferPos);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, memSizeVec4, NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, memSizeVec4, NULL, GL_STREAM_COPY);
 
 	glGenBuffers(1, &m_bufferNorm);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_bufferNorm);
@@ -209,13 +211,17 @@ GLuint MCubes::prefixSum(GLuint inputBuffer, GLuint outputBuffer)
 
 void MCubes::histoPyramids()
 {
-
-
 	glBeginQuery(GL_TIME_ELAPSED, query[0]);
 
-	histoPyramidsProg.use();
+	std::vector<float> wipeData(0, 4);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_bufferPos);
+	glClearBufferData(GL_SHADER_STORAGE_BUFFER, GL_RGBA32F, GL_RGBA, GL_FLOAT, wipeData.data());
 
+
+	histoPyramidsProg.use();
+	glm::uvec3 lSize(8,8,8);
 	/// Classify cubes
+
 
 
 	glActiveTexture(GL_TEXTURE1);
@@ -234,8 +240,10 @@ void MCubes::histoPyramids()
 	glBindTexture(GL_TEXTURE_1D, m_textureOffsets3);
 
 	// https://stackoverflow.com/questions/30110521/format-conversions-in-opengl-images
-	glBindImageTexture(2, m_textureHistoPyramid, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RG16F); 
-	glm::uvec3 nthreads = GLHelper::divup(glm::uvec3(512, 512, 512), glm::uvec3(32, 32, 1));
+	glBindImageTexture(2, m_textureHistoPyramid, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG16F); 
+	//glBindImageTexture(3, m_testVolumeTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R32F);
+
+	glm::uvec3 nthreads = GLHelper::divup(glm::uvec3(512, 512, 512), lSize);
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &m_classifyCubesID);
 	glUniform1f(m_isoLevelID, m_isoLevel);
 
@@ -245,19 +253,40 @@ void MCubes::histoPyramids()
 
 
 
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_3D, m_testVolumeTexture);
+	//glGenerateMipmap(GL_TEXTURE_3D);
+
+	//std::vector<float> sumVol0(1, 3);
+
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_3D, m_testVolumeTexture);
+	//glGetTexImage(GL_TEXTURE_3D, 9, GL_RED, GL_FLOAT, sumVol0.data());
+	//glBindTexture(GL_TEXTURE_3D, 0);
+	//glActiveTexture(0);
+
+	//std::cout << "mipmap end val : " << sumVol0[0] << std::endl;
+	//std::cout << "mipmap sum : " << sumVol0[0] * 512.0f * 512.0f * 512.0f << std::endl;
+	//std::cout.precision(std::numeric_limits<float>::max_digits10);
+	//std::cout << "mipmap sum in float precision: " << sumVol0[0] * 512.0f * 512.0f * 512.0f << std::endl;
+
 	/// Do first level of histoprys
+
+
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_3D, m_textureviewHistoPyramid); // texture view on first level
 
 	glBindImageTexture(2, m_textureHistoPyramid, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RG16F);
 	glBindImageTexture(1, m_textureHistoPyramid, 1, GL_TRUE, 0, GL_WRITE_ONLY, GL_R32F);
-	nthreads = GLHelper::divup(glm::uvec3(512 / 2, 512 / 2, 512 / 2), glm::uvec3(32, 32, 1));
+	nthreads = GLHelper::divup(glm::uvec3(512 / 2, 512 / 2, 512 / 2), lSize);
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &m_constructHPLevelID);
 	glUniform1i(m_baseLevelID, 0);
 
 	glDispatchCompute(nthreads.x, nthreads.y, nthreads.z);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+
 
 
 	// swap to r32f texture
@@ -271,7 +300,7 @@ void MCubes::histoPyramids()
 		glBindImageTexture(0, m_textureHistoPyramid, i, GL_TRUE, 0, GL_READ_ONLY, GL_R32F);
 		glBindImageTexture(1, m_textureHistoPyramid, i+1, GL_TRUE, 0, GL_WRITE_ONLY, GL_R32F); // bind point 1 in shader, level 1 in pyr volume
 		
-		glm::uvec3 nthreads = GLHelper::divup(glm::uvec3((512 >> i ) / 2, (512 >> i) / 2, (512 >> i) / 2), glm::uvec3(32, 32, 1));
+		glm::uvec3 nthreads = GLHelper::divup(glm::uvec3((512 >> i ) / 2, (512 >> i) / 2, (512 >> i) / 2), lSize);
 		glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &m_constructHPLevelID);
 		glUniform1i(m_baseLevelID, i);
 
@@ -293,7 +322,6 @@ void MCubes::histoPyramids()
 
 
 
-
 	/// Read top of pyramid to get total number of triangles in volume
 	std::vector<float> sumData((512 >> 9) * (512 >> 9) * (512 >> 9), 3);
 
@@ -303,15 +331,17 @@ void MCubes::histoPyramids()
 	glBindTexture(GL_TEXTURE_3D, 0);
 	glActiveTexture(0);
 
-	//std::cout << "num of triangles " << sumData[0] << std::endl;
 
 	m_totalSum = sumData[0] * 3; // total num verts
 
-	
+	//std::cout << "num of m_totalSum " << m_totalSum << std::endl;
+
 	//for (size_t i = 0; i < outData0.size(); i += 1000)
 	//{
 	//	std::cout << outData0[i] << " ";
 	//}
+
+
 
 	traverseHistoPyramidsProg.use();
 
@@ -333,8 +363,11 @@ void MCubes::histoPyramids()
 	glActiveTexture(GL_TEXTURE6);
 	glBindTexture(GL_TEXTURE_1D, m_textureOffsets3);
 
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_bufferPos);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * m_totalSum * 4, NULL, GL_DYNAMIC_DRAW); // this is the * 9 buffer in FAST vec3 * 3
+	glActiveTexture(GL_TEXTURE7);
+	glBindTexture(GL_TEXTURE_3D, m_textureviewHistoPyramid);
+
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_bufferPos);
+	//glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * m_totalSum * 4, NULL, GL_DYNAMIC_DRAW); // this is the * 9 buffer in FAST vec3 * 3
 
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_bufferNorm);
 	//glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(float) * m_totalSum * 5, NULL, GL_DYNAMIC_DRAW);
@@ -348,14 +381,24 @@ void MCubes::histoPyramids()
 	glUniform1f(m_isoLevel_TravID, m_isoLevel);
 
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_bufferPos);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_bufferNorm);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_bufferNorm);
 
 
 	glDispatchCompute(nthreads.x, nthreads.y, nthreads.z);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 
-	
+	glEndQuery(GL_TIME_ELAPSED);
+	GLuint available = 0;
+	while (!available) {
+		glGetQueryObjectuiv(query[0], GL_QUERY_RESULT_AVAILABLE, &available);
+	}
+	// elapsed time in nanoseconds
+	GLuint64 elapsed;
+	glGetQueryObjectui64vEXT(query[0], GL_QUERY_RESULT, &elapsed);
+	auto hpTime = elapsed / 1000000.0;
+
+	std::cout << "elapsed time : " << hpTime << std::endl;
 
 
 	//std::string modelFileName = "data/meshes/marchingCubesBin.stl";
@@ -390,17 +433,7 @@ void MCubes::histoPyramids()
 	//	outFile << point[0] << " " << point[1] << " " << point[2] << std::endl;
 	//}
 
-	glEndQuery(GL_TIME_ELAPSED);
-	GLuint available = 0;
-	while (!available) {
-		glGetQueryObjectuiv(query[0], GL_QUERY_RESULT_AVAILABLE, &available);
-	}
-	// elapsed time in nanoseconds
-	GLuint64 elapsed;
-	glGetQueryObjectui64vEXT(query[0], GL_QUERY_RESULT, &elapsed);
-	auto hpTime = elapsed / 1000000.0;
 
-	std::cout << "elapsed time : " << hpTime << std::endl;
 
 }
 

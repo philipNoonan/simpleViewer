@@ -33,6 +33,11 @@ public:
 	Render() {};
 	~Render() {};
 
+	void cleanup()
+	{
+		glDeleteTextures(1, &m_textureVolume);
+	}
+
 	GLFWwindow * window()
 	{
 		return m_window;
@@ -90,6 +95,10 @@ public:
 	{
 		return m_MV;
 	}
+	void setRenderOthroFlag(bool flag)
+	{
+		m_renderOrtho = flag;
+	}
 	void setRenderMarchingCubesFlag(bool flg)
 	{
 		m_renderMarchingCubes = flg;
@@ -97,6 +106,18 @@ public:
 	void setRenderRaytraceFlag(bool flg)
 	{
 		m_renderRaytrace = flg;
+	}
+	void setRenderOctlistFlag(bool flag)
+	{
+		m_renderOctree = flag;
+	}
+	void setOctlistBuffer(GLuint buffer)
+	{
+		m_bufferOctlist = buffer;
+	}
+	void setOctlistCount(int cnt)
+	{
+		m_octlistCount = cnt;
 	}
 
 private:
@@ -108,6 +129,7 @@ private:
 	GLuint m_VBO;
 	GLuint m_VBO_3D;
 	GLuint m_VBO_MC;
+	GLuint m_VBO_Oct;
 	GLuint m_EBO;
 
 	//GLuint createTexture(GLuint ID, GLenum target, int levels, int w, int h, int d, GLuint internalformat);
@@ -116,13 +138,17 @@ private:
 	GLuint m_textureRaycast;
 
 	GLuint m_bufferPos;
+	GLuint m_bufferOctlist;
 
 	std::vector<float> m_vertices;
 	std::vector<float> m_vertices3D;
 	std::vector<uint32_t> m_indices;
 	std::vector<uint32_t> m_indicesOrtho;
+	std::vector<float> m_cubePoints;
 
+	GLuint m_ViewID;
 	GLuint m_ProjectionID;
+	GLuint m_ModelID;
 	GLuint m_MvpID;
 	GLuint m_imSizeID;
 	GLuint m_sliceID;
@@ -133,6 +159,7 @@ private:
 	GLuint m_standardTextureID;
 	GLuint m_standardTexture3DID;
 	GLuint m_standardTextureMCID;
+	GLuint m_octlistID;
 
 	GLuint m_colorSelectionRoutineID;
 	GLuint m_fromVolumeID;
@@ -148,11 +175,16 @@ private:
 	glm::mat4 m_view = glm::mat4(1.0f);
 	glm::mat4 m_projection = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 3000.0f); // some default matrix
 	glm::mat4 m_model_color = glm::mat4(1.0);
+	glm::mat4 m_model = glm::mat4(1.0f);
+
 	float m_slice = 0.0f;
 	int m_level = 0;
 	int m_numTrianglesMC = 0;
+	int m_octlistCount = 0;
 
+	bool m_renderOrtho = false;
 	bool m_renderMarchingCubes = false;
 	bool m_renderRaytrace = false;
+	bool m_renderOctree = false;
 
 };

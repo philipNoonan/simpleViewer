@@ -61,8 +61,16 @@ void setVolume()
 
 	renderer.setRaycastTexture(rcaster.getVertexTexture());
 
+	octree.init(); // move into the load volume when shaders are stable
+	renderer.setOctlistBuffer(octree.getOctlistBuffer());
+
+
 	renderer.setPosBuffer(mcubes.getPosBuffer());
 	renderer.allocateBuffersFromMarchingCubes();
+
+	octree.setInputFloatVolume(renderer.getVolumeTexture());
+
+	loaderer.~Loader();
 
 
 }
@@ -86,7 +94,6 @@ int main()
 
 
 	glEnable(GL_DEPTH_TEST);
-
 
 
 
@@ -121,8 +128,10 @@ int main()
 
 		renderer.bindTexturesForRendering();
 
+		renderer.setRenderOthroFlag(renderOrtho);
 		renderer.setRenderMarchingCubesFlag(performMarchingCubes);
 		renderer.setRenderRaytraceFlag(performRaytrace);
+		renderer.setRenderOctlistFlag(performOctree);
 
 		renderer.render();
 
@@ -206,8 +215,14 @@ int main()
 			mcubes.setIsolevel(m_isoLevel);
 
 			mcubes.generateMarchingCubes();
-			
+
+			octree.setIsoLevel(m_isoLevel);
+			octree.buildTree();
+			octree.createList();
+
 		}
+		if (ImGui::Button("Ortho"))			renderOrtho ^= 1;		ImGui::SameLine(); ImGui::Checkbox("", &renderOrtho);
+
 		if (ImGui::Button("Raytrace"))			performRaytrace ^= 1;		ImGui::SameLine(); ImGui::Checkbox("", &performRaytrace);
 		if (ImGui::Button("Marching Cubes"))
 		{
@@ -218,21 +233,50 @@ int main()
 		
 		ImGui::SameLine(); ImGui::Checkbox("", &performMarchingCubes);
 		
+		if (ImGui::Button("Octree"))
+		{
+			performOctree ^= 1;
+			octree.buildTree();
+			octree.createList();
+			renderer.setOctlistCount(octree.getLength());
+
+		}
+		ImGui::SameLine(); ImGui::Checkbox("", &performOctree);
+
+
 		if (ImGui::Button("Export Mesh"))
 		{
 			//mcubes.generateMarchingCubes();
 			mcubes.exportMesh();
 		}
+
+		ImGui::Text("Octree Options");
+		{
+			
+			if (ImGui::SliderInt("cutoff", &m_cutoff, 0, 8))
+			{
+				octree.buildTree();
+				octree.createList();
+				renderer.setOctlistCount(octree.getLength());
+			}
+
+
+		}
+
 		ImGui::Text("Render Options");
 		{
 			ImGui::BeginGroup();
 			ImGui::SliderInt("pyr level", &m_level, 0, 9);
+
+
+
 			ImGui::SliderFloat("sliceX", &m_x_slice, 0.0f, 1.0f);
 			ImGui::SliderFloat("sliceY", &m_y_slice, 0.0f, 1.0f);
 			ImGui::SliderFloat("sliceZ", &m_z_slice, 0.0f, 1.0f);
 			imguiFocus = ImGui::IsAnyItemActive();
 			ImGui::EndGroup();
 			renderer.setLevel(m_level);
+			octree.setCutoff(m_cutoff);
 			renderer.setOrthoVerts(m_x_slice, m_y_slice, m_z_slice);
 		}
 
@@ -297,6 +341,10 @@ int main()
 
 	// Cleanup
 
+	
+	renderer.cleanup();
+	mcubes.cleanup();
+	octree.cleanup();
 
 	ImGui_ImplGlfwGL3_Shutdown();
 	ImGui::DestroyContext();

@@ -12,7 +12,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/transform.hpp>
-
+#include <glm/ext.hpp>
 
 #include "glutils.h"
 #include "glslprogram.h"
@@ -21,6 +21,8 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+
+#include <limits>
 
 
 struct mCubeConfig
@@ -56,6 +58,16 @@ public:
 	~MCubes() {};
 
 	void init();
+
+	void cleanup()
+	{
+		glDeleteTextures(1, &m_textureHistoPyramid);
+		glDeleteTextures(1, &m_textureviewHistoPyramid);
+
+		glDeleteBuffers(1, &m_bufferPos);
+
+
+	}
 
 	void setVolumeTexture(GLuint V)
 	{
@@ -131,6 +143,8 @@ private:
 	GLuint m_textureNumVertsTable;
 	GLuint m_textureNrOfTriangles;
 	GLuint m_textureOffsets3;
+
+	GLuint m_testVolumeTexture;
 
 	// buffers
 	GLuint m_bufferVoxelVerts;
