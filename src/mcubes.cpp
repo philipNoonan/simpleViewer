@@ -124,13 +124,17 @@ void MCubes::allocateBuffers()
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, m_bufferVoxelVertsScan);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, memSize, NULL, GL_DYNAMIC_DRAW);*/
 
-	glGenBuffers(1, &m_bufferPos);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_bufferPos);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, memSizeVec4, NULL, GL_STREAM_COPY);
+	//glGenBuffers(1, &m_bufferPos);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_bufferPos);
+	//glBufferData(GL_SHADER_STORAGE_BUFFER, memSizeVec4, NULL, GL_STREAM_COPY);
 
-	glGenBuffers(1, &m_bufferNorm);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_bufferNorm);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, memSizeVec4, NULL, GL_DYNAMIC_DRAW);
+	glGenBuffers(1, &m_bufferPosEncode);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_bufferPosEncode);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, memSizeVec4 / 4, NULL, GL_STREAM_COPY);
+
+	//glGenBuffers(1, &m_bufferNorm);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_bufferNorm);
+	//glBufferData(GL_SHADER_STORAGE_BUFFER, memSizeVec4, NULL, GL_DYNAMIC_DRAW);
 
 	//glGenBuffers(1, &m_bufferPrefixSumByGroup);
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 11, m_bufferPrefixSumByGroup);
@@ -213,10 +217,10 @@ void MCubes::histoPyramids()
 {
 	glBeginQuery(GL_TIME_ELAPSED, query[0]);
 
-	std::vector<float> wipeData(0, 4);
+	/*std::vector<float> wipeData(0, 4);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_bufferPos);
 	glClearBufferData(GL_SHADER_STORAGE_BUFFER, GL_RGBA32F, GL_RGBA, GL_FLOAT, wipeData.data());
-
+*/
 
 	histoPyramidsProg.use();
 	glm::uvec3 lSize(8,8,8);
@@ -380,7 +384,9 @@ void MCubes::histoPyramids()
 	glUniform1ui(m_totalSumID, sumData[0]);
 	glUniform1f(m_isoLevel_TravID, m_isoLevel);
 
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_bufferPos);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_bufferPos);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_bufferPosEncode);
+
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_bufferNorm);
 
 
@@ -400,6 +406,41 @@ void MCubes::histoPyramids()
 
 	std::cout << "elapsed time : " << hpTime << std::endl;
 
+	//std::vector<float> posData(m_totalSum * 4);
+	//std::vector<uint32_t> posDataOri(m_totalSum );
+	//std::vector<uint32_t> pD(m_totalSum);
+
+	//std::vector<uint32_t> posDataOri2(m_totalSum * 4, 1000);
+
+	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_bufferPos);
+	//void *ptr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	//memcpy_s(posData.data(), posData.size() * sizeof(float), ptr, posData.size() * sizeof(float));
+	//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_bufferPosEncode);
+	//void *ptrEnc = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	//memcpy_s(pD.data(), pD.size() * sizeof(float), ptrEnc, pD.size() * sizeof(float));
+	//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+	//int j = 0;
+	//for (int i = 0; i < posDataOri.size(); i++, j += 3)
+	//{
+	//	posDataOri[i] = (uint32_t)posData[j] << 20 | (uint32_t)posData[j + 1] << 10 | (uint32_t)posData[j + 2] << 0;
+	//	posDataOri2[j] = (posDataOri[i] & (1023 << 20)) >> 20;
+	//	posDataOri2[j+1] = (posDataOri[i] & (1023 << 10)) >> 10;
+	//	posDataOri2[j+2] = (posDataOri[i] & (1023 << 0)) >> 0;
+
+	//}
+
+	//int j = 0;
+	//for (int i = 0; i < pD.size(); i++, j += 3)
+	//{
+	//	posDataOri2[j] = (pD[i] & (1023 << 20)) >> 20;
+	//	posDataOri2[j + 1] = (pD[i] & (1023 << 10)) >> 10;
+	//	posDataOri2[j + 2] = (pD[i] & (1023 << 0)) >> 0;
+
+
+	//}
 
 	//std::string modelFileName = "data/meshes/marchingCubesBin.stl";
 
@@ -441,7 +482,7 @@ void MCubes::exportMesh()
 {
 	std::vector<float> posData(m_totalSum * 4);
 
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_bufferPos);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_bufferPosEncode);
 	void *ptr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 	memcpy_s(posData.data(), posData.size() * sizeof(float), ptr, posData.size() * sizeof(float));
 	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);

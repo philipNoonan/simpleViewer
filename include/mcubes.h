@@ -84,7 +84,7 @@ public:
 	void generateMarchingCubes();
 	GLuint getPosBuffer()
 	{
-		return m_bufferPos;
+		return m_bufferPosEncode;
 	}
 	int getNumberTriangles()
 	{
@@ -154,6 +154,7 @@ private:
 	GLuint m_bufferCompactedVoxelArray;
 	GLuint m_bufferPos;
 	GLuint m_bufferNorm;
+	GLuint m_bufferPosEncode;
 	GLuint m_bufferPrefixSumByGroup;
 
 

@@ -5,12 +5,12 @@ layout (location = 1) in vec2 texCoord;
 layout (location = 2) in vec3 position3D;
 layout (location = 3) in vec3 texCoord3D;
 
-layout (location = 4) in vec4 positionMC;
+layout (location = 4) in uint positionMC;
 layout (location = 5) in vec4 normalMC;
 
 layout (location = 6) in vec3 cubePoints;
 
-layout (location = 7) in vec4 octlist;
+layout (location = 7) in uint octlist;
 
 uniform mat4 MVP;
 
@@ -45,16 +45,28 @@ vec4 fromStandardTexture3D()
 subroutine(getPosition)
 vec4 fromStandardTextureMC()
 {
-	TexCoord3D = vec3(positionMC.x / 512.0f, positionMC.y / 512.0f, positionMC.z / 512.0f);
-	return vec4(MVP * vec4((positionMC.x / 256.0f)- 1.0, (positionMC.y / 256.0f) - 1.0, (positionMC.z / 256.0f) - 1.0, 1.0f));
+	vec3 vertPoint = vec3((positionMC & 1072693248) >> 20, (positionMC & 1047552) >> 10, positionMC & 1023);
+
+	TexCoord3D = vertPoint / 512.0f;
+	return vec4(MVP * vec4((vertPoint / 256.0f) - 1.0f, 1.0f));
+
+	//TexCoord3D = vec3(positionMC.x / 512.0f, positionMC.y / 512.0f, positionMC.z / 512.0f);
+	//return vec4(MVP * vec4((positionMC.x / 256.0f)- 1.0, (positionMC.y / 256.0f) - 1.0, (positionMC.z / 256.0f) - 1.0, 1.0f));
 }
 
 subroutine(getPosition)
 vec4 fromOctlist()
 {
 	//TexCoord3D = vec3(texCoord3D.x, texCoord3D.y, texCoord3D.z);
-	float octSideLength = float(pow(2, octlist.w));
-	vec3 origin = vec3(octlist.xyz) * octSideLength;
+
+	uint xPos = (octlist & 4286578688) >> 23;
+	uint yPos = (octlist & 8372224) >> 14;
+	uint zPos = (octlist & 16352) >> 5;
+	uint lod = (octlist & 31);
+
+
+	float octSideLength = float(pow(2, lod));
+	vec3 origin = vec3(xPos, yPos, zPos) * octSideLength;
 
 	mat4 transMat = mat4(1.0f);
 

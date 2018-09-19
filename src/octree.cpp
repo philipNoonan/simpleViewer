@@ -55,9 +55,14 @@ void Octree::allocateTextures()
 void Octree::allocateBuffers()
 {
 	// quadtrees
-	glGenBuffers(1, &m_bufferPos);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_bufferPos);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, 10e7, NULL, GL_STREAM_COPY); // some max size
+	//glGenBuffers(1, &m_bufferPos);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_bufferPos);
+	//glBufferData(GL_SHADER_STORAGE_BUFFER, 10e7, NULL, GL_STREAM_COPY); // some max size
+
+	glGenBuffers(1, &m_bufferPosEncode);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_bufferPosEncode);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, 1e7, NULL, GL_STREAM_COPY); // some max size, look into this
+	
 
 
 }
@@ -155,7 +160,8 @@ void Octree::createList()
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_3D, m_texture_hpOctree);
 
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, m_bufferPos);
+	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_bufferPos);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_bufferPosEncode);
 
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &m_traverseHPLevelID);
 	glUniform1ui(m_totalSumID, m_totalSum);
@@ -176,12 +182,63 @@ void Octree::createList()
 
 	std::cout << "octree list time : " << hpTime << std::endl;
 
+	//uint32_t xPos = 1023 << 20;
+	//uint32_t yPos = 1023 << 10;
+	//uint32_t zPos = 1023 << 5;
 
 	//std::vector<float> posData(m_totalSum * 4);
+	//std::vector<uint32_t> posDataOri(m_totalSum );
+	//std::vector<uint32_t> posDataOri2(m_totalSum * 4);
 
 	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_bufferPos);
 	//void *ptr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 	//memcpy_s(posData.data(), posData.size() * sizeof(float), ptr, posData.size() * sizeof(float));
 	//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+
+	//int j = 0;
+	//for (int i = 0; i < posDataOri.size(); i++, j += 4)
+	//{
+	//	posDataOri[i] = (uint32_t)posData[j] << 23 | (uint32_t)posData[j + 1] << 14 | (uint32_t)posData[j + 2] << 5 | (uint32_t)posData[j + 3];
+	//	posDataOri2[j] = (posDataOri[i] & (511 << 23)) >> 23;
+	//	posDataOri2[j+1] = (posDataOri[i] & (511 << 14)) >> 14;
+	//	posDataOri2[j+2] = (posDataOri[i] & (511 << 5)) >> 5;
+	//	posDataOri2[j+3] = posDataOri[i] & (31);
+
+	//}
+
+	//for (int k = 0; k < posDataOri.size(); k++)
+	//{
+
+	//}
+
+	//std::vector<uint32_t> posDataEncode(m_totalSum);
+	//std::vector<uint32_t> posDataOut(m_totalSum * 4);
+
+	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_bufferPosEncode);
+	//void *ptrEnc = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
+	//memcpy_s(posDataEncode.data(), posDataEncode.size() * sizeof(uint32_t), ptrEnc, posDataEncode.size() * sizeof(float));
+	//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+
+
+
+
+
+	//j = 0;
+	//for (int i = 0; i < posDataEncode.size(); i++, j += 4)
+	//{
+	//	  
+
+	//	posDataOut[j] = posDataEncode[i] & 4286578688;
+	//	posDataOut[j + 1] = posDataEncode[i] & 8372224;
+	//	posDataOut[j + 2] = posDataEncode[i] & 16352;
+	//	posDataOut[j + 3] = posDataEncode[i] & 31;
+
+	//}
+
+
+
+
 
 }

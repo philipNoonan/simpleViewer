@@ -25,6 +25,13 @@ layout(std430, binding = 0) buffer posBuf
     // DONT USE VEC3 IN SSBO https://stackoverflow.com/questions/38172696/should-i-ever-use-a-vec3-inside-of-a-uniform-buffer-or-shader-storage-buffer-o
     vec4 pos [];
 };
+
+layout(std430, binding = 1) buffer posBufEncode
+{
+    // DONT USE VEC3 IN SSBO https://stackoverflow.com/questions/38172696/should-i-ever-use-a-vec3-inside-of-a-uniform-buffer-or-shader-storage-buffer-o
+    uint posEncode [];
+};
+
 //layout(std430, binding = 1) buffer normBuf
 //{
 //    vec3 norm [];
@@ -340,6 +347,12 @@ bool traverseHPLevel()
         // target is for each triangle
         // the problem is hereerererrererererere
         pos[target * 3 + vertexNr] = vec4(vertex.xyz, 0.0f); // THIS IS VERY SLOW FOR SOME STRNAGE REASON, BECAUSE WE KEEP OPN CHANGEING THE SIZE AND PROBABLY THE LOCATION OF THIS GUY
+
+
+
+        posEncode[target * 3 + vertexNr] = uint(vertex.x) << 20 | uint(vertex.y) << 10 | uint(vertex.z);
+        
+        
         // }
         //norm[target * 3 + vertexNr] = normal;
         //}

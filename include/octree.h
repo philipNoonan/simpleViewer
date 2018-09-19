@@ -36,7 +36,7 @@ public:
 	}
 	GLuint getOctlistBuffer()
 	{
-		return m_bufferPos;
+		return m_bufferPosEncode;
 	}
 	int getLength()
 	{
@@ -88,7 +88,7 @@ private:
 
 	// buffers
 	GLuint m_bufferPos;
-	//GLuint m_bufferPosEncoded;
+	GLuint m_bufferPosEncode;
 
 	int m_totalSum;
 	float m_isoLevel = 2000.0f;
