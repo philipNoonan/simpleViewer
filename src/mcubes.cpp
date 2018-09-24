@@ -16,11 +16,11 @@ void MCubes::init()
 void MCubes::compileAndLinkShader()
 {
 	try {
-		marchingCubesProg.compileShader("shaders/marchingCubes.cs");
-		marchingCubesProg.link();
+		//marchingCubesProg.compileShader("shaders/marchingCubes.cs");
+		//marchingCubesProg.link();
 
-		prefixSumProg.compileShader("shaders/prefixSum.cs");
-		prefixSumProg.link();
+		//prefixSumProg.compileShader("shaders/prefixSum.cs");
+		//prefixSumProg.link();
 
 		histoPyramidsProg.compileShader("shaders/histoPyramids.cs");
 		histoPyramidsProg.link();
@@ -53,27 +53,27 @@ void MCubes::setLocations()
 	m_isoLevel_TravID = glGetUniformLocation(traverseHistoPyramidsProg.getHandle(), "isoLevel");
 
 
-	// PREFIX SUMS
-	m_prefixSumSubroutineID = glGetSubroutineUniformLocation(prefixSumProg.getHandle(), GL_COMPUTE_SHADER, "getPrefixSum");
-	m_resetSumsArrayID = glGetSubroutineIndex(prefixSumProg.getHandle(), GL_COMPUTE_SHADER, "resetSumsArray");
+	//// PREFIX SUMS
+	//m_prefixSumSubroutineID = glGetSubroutineUniformLocation(prefixSumProg.getHandle(), GL_COMPUTE_SHADER, "getPrefixSum");
+	//m_resetSumsArrayID = glGetSubroutineIndex(prefixSumProg.getHandle(), GL_COMPUTE_SHADER, "resetSumsArray");
 
-	m_forEachGroupID = glGetSubroutineIndex(prefixSumProg.getHandle(), GL_COMPUTE_SHADER, "forEachGroup");
-	m_forEveryGroupID = glGetSubroutineIndex(prefixSumProg.getHandle(), GL_COMPUTE_SHADER, "forEveryGroup");
-	m_forFinalIncrementalSumID = glGetSubroutineIndex(prefixSumProg.getHandle(), GL_COMPUTE_SHADER, "forFinalIncrementalSum");
+	//m_forEachGroupID = glGetSubroutineIndex(prefixSumProg.getHandle(), GL_COMPUTE_SHADER, "forEachGroup");
+	//m_forEveryGroupID = glGetSubroutineIndex(prefixSumProg.getHandle(), GL_COMPUTE_SHADER, "forEveryGroup");
+	//m_forFinalIncrementalSumID = glGetSubroutineIndex(prefixSumProg.getHandle(), GL_COMPUTE_SHADER, "forFinalIncrementalSum");
 
-	// MARCHING CUBES
-	m_marchingCubesSubroutineID = glGetSubroutineUniformLocation(marchingCubesProg.getHandle(), GL_COMPUTE_SHADER, "doMarchingCubes");
-	m_classifyVoxelID = glGetSubroutineIndex(marchingCubesProg.getHandle(), GL_COMPUTE_SHADER, "launchClassifyVoxel");
-	m_compactVoxelsID = glGetSubroutineIndex(marchingCubesProg.getHandle(), GL_COMPUTE_SHADER, "launchCompactVoxels");
-	m_generateTrianglesID = glGetSubroutineIndex(marchingCubesProg.getHandle(), GL_COMPUTE_SHADER, "launchGenerateTriangles");
+	//// MARCHING CUBES
+	//m_marchingCubesSubroutineID = glGetSubroutineUniformLocation(marchingCubesProg.getHandle(), GL_COMPUTE_SHADER, "doMarchingCubes");
+	//m_classifyVoxelID = glGetSubroutineIndex(marchingCubesProg.getHandle(), GL_COMPUTE_SHADER, "launchClassifyVoxel");
+	//m_compactVoxelsID = glGetSubroutineIndex(marchingCubesProg.getHandle(), GL_COMPUTE_SHADER, "launchCompactVoxels");
+	//m_generateTrianglesID = glGetSubroutineIndex(marchingCubesProg.getHandle(), GL_COMPUTE_SHADER, "launchGenerateTriangles");
 
-	m_gridSizeID = glGetUniformLocation(marchingCubesProg.getHandle(), "gridSize");
-	m_gridSizeShiftID = glGetUniformLocation(marchingCubesProg.getHandle(), "gridSizeShift");
-	m_gridSizeMaskID = glGetUniformLocation(marchingCubesProg.getHandle(), "gridSizeMask");
-	m_numVoxelsID = glGetUniformLocation(marchingCubesProg.getHandle(), "numVoxels");
-	m_activeVoxelsID = glGetUniformLocation(marchingCubesProg.getHandle(), "activeVoxels");
-	m_maxVertsID = glGetUniformLocation(marchingCubesProg.getHandle(), "maxVerts");
-	m_voxelSizeID = glGetUniformLocation(marchingCubesProg.getHandle(), "voxelSize");
+	//m_gridSizeID = glGetUniformLocation(marchingCubesProg.getHandle(), "gridSize");
+	//m_gridSizeShiftID = glGetUniformLocation(marchingCubesProg.getHandle(), "gridSizeShift");
+	//m_gridSizeMaskID = glGetUniformLocation(marchingCubesProg.getHandle(), "gridSizeMask");
+	//m_numVoxelsID = glGetUniformLocation(marchingCubesProg.getHandle(), "numVoxels");
+	//m_activeVoxelsID = glGetUniformLocation(marchingCubesProg.getHandle(), "activeVoxels");
+	//m_maxVertsID = glGetUniformLocation(marchingCubesProg.getHandle(), "maxVerts");
+	//m_voxelSizeID = glGetUniformLocation(marchingCubesProg.getHandle(), "voxelSize");
 }
 
 
@@ -102,7 +102,7 @@ void MCubes::allocateBuffers()
 {
 	// MARCHING CUBES BUFFERS
 	size_t memSize = sizeof(GLuint) * m_mcubeConfiguration.numVoxels;
-	size_t memSizeVec4 = 10e8; // SET THIS PROPERLY ONCE AND DONT CHNAGE IT
+	size_t memSizeVec4 = 512 * 512 * 512 * sizeof(uint32_t); // SET THIS PROPERLY ONCE AND DONT CHNAGE IT
 
 	/*glGenBuffers(1, &m_bufferVoxelVerts);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_bufferVoxelVerts);
@@ -130,7 +130,8 @@ void MCubes::allocateBuffers()
 
 	glGenBuffers(1, &m_bufferPosEncode);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_bufferPosEncode);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, memSizeVec4 / 4, NULL, GL_STREAM_COPY);
+	//glBufferData(GL_SHADER_STORAGE_BUFFER, memSizeVec4, NULL, GL_STREAM_COPY);
+	glBufferStorage(GL_SHADER_STORAGE_BUFFER, 512 * 512 * 512 * sizeof(uint32_t), NULL, 0);
 
 	//glGenBuffers(1, &m_bufferNorm);
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_bufferNorm);
@@ -333,7 +334,7 @@ void MCubes::histoPyramids()
 	glBindTexture(GL_TEXTURE_3D, m_textureHistoPyramid);
 	glGetTexImage(GL_TEXTURE_3D, 9, GL_RED, GL_FLOAT, sumData.data());
 	glBindTexture(GL_TEXTURE_3D, 0);
-	glActiveTexture(0);
+	glActiveTexture(GL_TEXTURE0);
 
 
 	m_totalSum = sumData[0] * 3; // total num verts

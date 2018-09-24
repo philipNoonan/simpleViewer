@@ -3,6 +3,8 @@
 layout(local_size_x = 32, local_size_y = 32) in;
 
 layout(binding= 0) uniform sampler3D volumeDataTexture;
+layout(binding= 1) uniform sampler3D octListTexture;
+
 //layout(binding= 1) uniform sampler3D volumeColorTexture;
 //layout(binding= 2) uniform sampler2D currentTextureColor;
      
@@ -25,6 +27,7 @@ layout(binding = 2, rgba32f) uniform image2D outNormal;
 //    vec4 NormalTSDF [];
 //};
 
+uniform int level = 8; //set me as dependent on texture size or minimum cutoff level
 
 uniform mat4 view; // == raycast pose * invK
 uniform float nearPlane;
@@ -111,6 +114,99 @@ bool intersectBox(vec4 r_o, vec4 r_d, vec4 boxmax, inout float tnear, inout floa
     return smallest_tmax > largest_tmin;
 }
 
+float sampleOctList(vec3 pos, int lod)
+{
+    return samp = texelFetch(volumeDataTexture, ivec3(pos), lod).x;
+}
+
+void raytraceOctList()
+{
+    // using texelfetches sample the voxel at entry point + half length of voxel at current LOD
+
+    // two cases to detect
+
+    // if voxel is -1 then we have hit a leaf node, do functionality here, such as update color integral 
+
+    // if voxel is > 0 then go down a level and repeat texelfetch
+
+    // calculate exit point of voxel
+
+    // early termination of ray tracing if certain threshold met. thresh tbd.
+
+    // input to this shader is x,y pixel space coords, one thread per pixel
+
+    int lod = level;
+    vec2 pix = vec2(gl_GlobalInvocationID.xy);
+    vec3 texSize = vec3(textureSize(volumeDataTexture, lod).xyz);
+
+    if (pix.x >= texSize.x || pix.y >= texSize.y)
+    {
+        return;
+    }
+
+    float u = (((pix.x / float(texSize.x)) * 2.0f) - 1.0f) * 1.0f; // right // PROBLEM??
+    float v = (((pix.y / float(texSize.y)) * 2.0f) - 1.0f) * 1.0f; // top
+
+    ivec4 boxMax0;
+
+
+    vec4 eyeRay_o;
+    vec4 eyeRay_d;
+
+    vec4 tempEyeRay_d = normalize(vec4(u, v, -zNear, 0.0f)); //-zNear???
+
+    eyeRay_o = vec4(view[3][0], view[3][1], view[3][2], 0.0f); // PROBLEM??
+    eyeRay_d.x = dot(tempEyeRay_d, vec4(view[0][0], view[1][0], view[2][0], 0.0f)); // PROBLEM?? // PROBLEM??
+    eyeRay_d.y = dot(tempEyeRay_d, vec4(view[0][1], view[1][1], view[2][1], 0.0f)); // PROBLEM?? // PROBLEM??
+    eyeRay_d.z = dot(tempEyeRay_d, vec4(view[0][2], view[1][2], view[2][2], 0.0f)); // PROBLEM?? // PROBLEM??
+    eyeRay_d.w = 1.0f;
+
+    float tNear, tFar;
+    vec4 volumeColor = vec4(0.0f);
+
+
+    while (tFar < boxMax0[2]) // fixme
+    {
+        boxMax0 = vec4(int(boxMaxs[0]) >> lod, int(boxMaxs[1]) >> lod, int(boxMaxs[2]) >> lod, 0.0f);
+        
+        bool hit = intersectBox(eyeRay_o, eyeRay_d, boxMax0, tNear, tFar);
+
+        if (!hit)
+        {
+            imageStore(outVertex, ivec2(pix), volumeColor);
+            return;
+        }
+
+        float t = tNear + float(int(boxMaz0[0]) >> lod) / 2.0f; //back to front?
+
+        vec4 pos = eyeRay_o + eyeRay_d * t;
+
+        float samp = sampleOctList(pos, lod);
+
+        if (samp == -1.0f)
+        {
+            volumeColor.xyz += vec3(0.1);
+        }
+        else
+        {
+            lod--;
+        }
+
+        tNear = tFar; // move to back face of voxel, and therefore front face of next voxel
+
+        // need to change the box max values too, change the name as well so it makes sense
+
+    if (volumeColor.w >= 1.0f)
+        {
+            imageStore(outVertex, ivec2(pix), volumeColor);
+            return;
+        }
+    }
+
+   
+
+
+}
 
 void raycast()
 {
@@ -161,7 +257,7 @@ void raycast()
 
     vec4 volumeColor = vec4(0.0f);
 
-    float t = tFar;
+    float t = tNear; //back to front?
 
     for (uint i = 0; i < maxSteps; i++)
     {
@@ -176,7 +272,7 @@ void raycast()
         }
         if (volumeColor.x > 100.0f) break; // PROBLEM??
 
-        t -= tStep;
+        t += tStep;
 
         if (t < tNear) break;
 
@@ -242,6 +338,7 @@ vec3 getGradient(vec4 hit)
 void main()
 {
     raycast();
+    //raytraceOctList();
 }
 
 

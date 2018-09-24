@@ -217,8 +217,12 @@ int main()
 			mcubes.generateMarchingCubes();
 
 			octree.setIsoLevel(m_isoLevel);
+			octree.setCutoff(m_cutoff);
+
 			octree.buildTree();
 			octree.createList();
+			renderer.setOctlistCount(octree.getLength());
+
 
 		}
 		if (ImGui::Button("Ortho"))			renderOrtho ^= 1;		ImGui::SameLine(); ImGui::Checkbox("", &renderOrtho);
@@ -236,6 +240,9 @@ int main()
 		if (ImGui::Button("Octree"))
 		{
 			performOctree ^= 1;
+			octree.setIsoLevel(m_isoLevel);
+			octree.setCutoff(m_cutoff);
+
 			octree.buildTree();
 			octree.createList();
 			renderer.setOctlistCount(octree.getLength());
@@ -255,6 +262,9 @@ int main()
 			
 			if (ImGui::SliderInt("cutoff", &m_cutoff, 0, 8))
 			{
+				octree.setIsoLevel(m_isoLevel);
+				octree.setCutoff(m_cutoff);
+
 				octree.buildTree();
 				octree.createList();
 				renderer.setOctlistCount(octree.getLength());
@@ -276,7 +286,6 @@ int main()
 			imguiFocus = ImGui::IsAnyItemActive();
 			ImGui::EndGroup();
 			renderer.setLevel(m_level);
-			octree.setCutoff(m_cutoff);
 			renderer.setOrthoVerts(m_x_slice, m_y_slice, m_z_slice);
 		}
 

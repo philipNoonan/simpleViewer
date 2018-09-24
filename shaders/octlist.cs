@@ -20,13 +20,13 @@ layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in; //
 layout(binding = 0) uniform sampler3D hpVolumeTexture; 
 
     // buffers 
-layout(std430, binding = 0) buffer posBuf
-{
-    // DONT USE VEC3 IN SSBO https://stackoverflow.com/questions/38172696/should-i-ever-use-a-vec3-inside-of-a-uniform-buffer-or-shader-storage-buffer-o
-    vec4 pos [];
-};
+//layout(std430, binding = 2) buffer posBuf
+//{
+//    // DONT USE VEC3 IN SSBO https://stackoverflow.com/questions/38172696/should-i-ever-use-a-vec3-inside-of-a-uniform-buffer-or-shader-storage-buffer-o
+//    vec4 pos [];
+//};
 
-layout(std430, binding = 1) buffer posBufEnc
+layout(std430, binding = 3) buffer posBufEnc
 {
     // DONT USE VEC3 IN SSBO https://stackoverflow.com/questions/38172696/should-i-ever-use-a-vec3-inside-of-a-uniform-buffer-or-shader-storage-buffer-o
     uint posEncode [];
@@ -134,7 +134,7 @@ bool traverseHPLevel()
             posEncode[target] = (outVec.x) << 23 | outVec.y << 14 | outVec.z << 5 | uint(lod + 1); 
 
 
-            pos[target] = vec4(cubePosition.xyz + cubeOffsets[cubePosition.w].xyz, lod + 1);
+            //pos[target] = vec4(cubePosition.xyz + cubeOffsets[cubePosition.w].xyz, lod + 1);
         }
         else
         {
@@ -142,13 +142,15 @@ bool traverseHPLevel()
 
             posEncode[target] = (outVec.x) << 23 | outVec.y << 14 | outVec.z << 5 | uint(lod);
 
-            pos[target] = vec4(cubePosition.xyz + cubeOffsets[cubePosition.w].xyz, lod);
+            //pos[target] = vec4(cubePosition.xyz + cubeOffsets[cubePosition.w].xyz, lod);
         }
 
     }
     else
     {
-        pos[target] = vec4(-1, -2, -3, -4);
+        posEncode[target] = 0;
+
+        //pos[target] = vec4(-1, -2, -3, -4);
 
     }
 

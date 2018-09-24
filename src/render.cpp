@@ -5,7 +5,7 @@ GLFWwindow * Render::loadGLFWWindow()
 
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	//glfwWindowHint(GLFW_REFRESH_RATE, 30);
 	glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
@@ -383,13 +383,13 @@ void Render::render()
 	MVP = m_projection * m_view *m_model_color;
 	m_MV = m_view * m_model_color;
 	
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	//
 
 
 	glBindVertexArray(m_VAO);
 	if (m_renderOrtho)
 	{
-
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
 
@@ -402,11 +402,12 @@ void Render::render()
 	}
 
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	
 
 
 	if (m_renderMarchingCubes)
 	{
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glEnableVertexAttribArray(4);
 		glBindBuffer(GL_ARRAY_BUFFER, m_bufferPos);
 
@@ -415,15 +416,10 @@ void Render::render()
 		glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_standardTextureMCID);
 		glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &m_fromVertexArrayID);
 		glDrawArrays(GL_TRIANGLES, 0, m_numTrianglesMC);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
-	if (m_renderRaytrace)
-	{
-		glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_standardTextureID);
-		glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &m_fromTexture2DID);
 
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-	}
 
 	if (m_renderOctree)
 	{
@@ -445,12 +441,20 @@ void Render::render()
 		glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_octlistID);
 		glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &m_fromVertexArrayID);
 
-		glDrawArraysInstanced(GL_TRIANGLES, 0, 36, m_octlistCount * 36);
+		glDrawArraysInstanced(GL_TRIANGLES, 0, 36, m_octlistCount);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	}
 	
+	if (m_renderRaytrace)
+	{
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_standardTextureID);
+		glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &m_fromTexture2DID);
 
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
 
 	glBindVertexArray(0);
 

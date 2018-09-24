@@ -39,7 +39,7 @@ bool hpDiscriminator()
 
     float writeValue;
 
-    if (inputValue < isoLevel)
+    if (inputValue > isoLevel)
     {
         writeValue = -1.0f;
     }

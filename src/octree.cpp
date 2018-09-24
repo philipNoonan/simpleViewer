@@ -59,10 +59,12 @@ void Octree::allocateBuffers()
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_bufferPos);
 	//glBufferData(GL_SHADER_STORAGE_BUFFER, 10e7, NULL, GL_STREAM_COPY); // some max size
 
-	glGenBuffers(1, &m_bufferPosEncode);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_bufferPosEncode);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, 1e7, NULL, GL_STREAM_COPY); // some max size, look into this
 	
+
+	glGenBuffers(1, &m_bufferPosEncode);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, m_bufferPosEncode);
+	//glBufferData(GL_SHADER_STORAGE_BUFFER, 512*512*512 * sizeof(uint32_t), NULL, GL_STREAM_COPY); // some max size, look into this
+	glBufferStorage(GL_SHADER_STORAGE_BUFFER, 512 * 512 * 512 * sizeof(uint32_t), NULL, 0);
 
 
 }
@@ -90,7 +92,7 @@ void Octree::buildTree()
 	
 
 
-	glActiveTexture(0);
+	glActiveTexture(GL_TEXTURE0);
 
 	for (int i = 0; i < 9; i++)
 	{
@@ -99,7 +101,7 @@ void Octree::buildTree()
 		glUniform1i(m_hpLevelID, i);
 		glUniform1ui(m_cutoffTreeID, m_cutoff);
 
-		glBindImageTexture(0, m_texture_hpOctree, i + 1, GL_TRUE, 0, GL_WRITE_ONLY, GL_R32F);
+		glBindImageTexture(0, m_texture_hpOctree, i + 1, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
 
 		glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &m_hpBuilderID);
 		glDispatchCompute(nthreads.x, nthreads.y, nthreads.z);
