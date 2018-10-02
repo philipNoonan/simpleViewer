@@ -55,13 +55,21 @@ public:
 	{
 		m_textureNormals = nB;
 	}
-	void setInverseCameraMatrix(glm::mat4 invCamMat)
+	void setInverseProjection(glm::mat4 invProj)
 	{
-		m_invK = glm::inverse(invCamMat);
+		m_invProj = invProj;
 	}
-	void setPose(glm::mat4 pose)
+	void setView(glm::mat4 view)
 	{
-		m_pose = pose;
+		m_view = view;
+	}
+	void setInverseView(glm::mat4 invView)
+	{
+		m_invView = invView;
+	}
+	void setInverseModel(glm::mat4 invModel)
+	{
+		m_invModel = invModel;
 	}
 	void setScreenWidth(int w)
 	{
@@ -83,21 +91,29 @@ private:
 
 
 	// locations
-	GLuint m_viewID_r;
+	GLuint m_invModelID_r;
+	GLuint m_invViewID_r;
+	GLuint m_invProjID_r;
+
 	GLuint m_nearPlaneID;
 	GLuint m_farPlaneID;
 	GLuint m_stepID;
 	GLuint m_largeStepID;
 	GLuint m_volDimID_r;
 	GLuint m_volSizeID_r;
+	GLuint m_screenSizeID;
 	GLuint m_helpersSubroutineID;
 	// textures
 	GLuint m_textureVolume;
 	GLuint m_textureVertices;
 	GLuint m_textureNormals;
 
-	glm::mat4 m_invK = glm::mat4(1.0f);
-	glm::mat4 m_pose = glm::mat4(1.0f);
+	glm::mat4 m_invProj = glm::mat4(1.0f);
+	glm::mat4 m_model = glm::mat4(1.0f);
+	glm::mat4 m_view = glm::mat4(1.0f);
+	glm::mat4 m_invView = glm::mat4(1.0f);
+
+	glm::mat4 m_invModel = glm::mat4(1.0f);
 
 	int m_screenWidth;
 	int m_screenHeight;

@@ -356,6 +356,13 @@ void Render::render()
 		glm::vec3(0, 0, 0), // and looks here : at the same position, plus "direction"
 		glm::vec3(0.0f, 1.0f, 0.0f)                  // Head is up (set to 0,-1,0 to look upside-down)
 	);
+
+	glm::mat4 m_view512 = glm::lookAt(
+		glm::vec3(0, 0, -m_zoom),           // Camera is here
+		glm::vec3(0, 0, 0), // and looks here : at the same position, plus "direction"
+		glm::vec3(0.0f, 1.0f, 0.0f)                  // Head is up (set to 0,-1,0 to look upside-down)
+	);
+
 	//std::cout << m_camerPos.x << " " << m_camerPos.y << " " << m_camerPos.z << std::endl;
 	int w, h;
 	glfwGetFramebufferSize(m_window, &w, &h);
@@ -380,11 +387,13 @@ void Render::render()
 
 	imageSize = glm::vec3(512, 512, 304);
 	glm::vec3 sVals(0, 0, m_slice);
-	MVP = m_projection * m_view *m_model_color;
+	MVP = m_projection * m_view * m_model_color;
 	m_MV = m_view * m_model_color;
 	
 	//
 
+	//glm::mat4 invMV = glm::inverse(m_MV);
+	//glm::mat4 transMV = glm::transpose(m_MV);
 
 	glBindVertexArray(m_VAO);
 	if (m_renderOrtho)
@@ -436,6 +445,7 @@ void Render::render()
 		glUniformMatrix4fv(m_ProjectionID, 1, GL_FALSE, glm::value_ptr(m_projection));
 		glUniformMatrix4fv(m_ViewID, 1, GL_FALSE, glm::value_ptr(m_view));
 		glUniformMatrix4fv(m_ModelID, 1, GL_FALSE, glm::value_ptr(m_model));
+		glUniformMatrix4fv(m_MvpID, 1, GL_FALSE, glm::value_ptr(MVP));
 
 
 		glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_octlistID);
@@ -448,12 +458,79 @@ void Render::render()
 	
 	if (m_renderRaytrace)
 	{
+		glUniformMatrix4fv(m_MvpID, 1, GL_FALSE, glm::value_ptr(MVP));
+		glUniformMatrix4fv(m_ProjectionID, 1, GL_FALSE, glm::value_ptr(m_projection));
+		glUniformMatrix4fv(m_ViewID, 1, GL_FALSE, glm::value_ptr(m_view));
+		glUniformMatrix4fv(m_ModelID, 1, GL_FALSE, glm::value_ptr(m_model));
+
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_standardTextureID);
 		glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &m_fromTexture2DID);
 
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+		//glm::vec4 origin = (m_view * m_model)[3];
+		glm::vec3 boxmin = glm::vec3(-1.0, -1.0, -1.0);
+
+		glm::vec3 boxmax = glm::vec3(1.0, 1.0, 1.0);
+
+		/*	for (int i = 255; i < 256; i++)
+			{
+				for (int j = 255; j < 256; j++)
+				{
+					float u = (2.0 * float(i)) / 512.0 - 1.0f;
+					float v = (2.0 * float(j)) / 512.0 - 1.0f;
+	*/
+		float u = 0;
+		float v = 0;
+
+		glm::vec4 origin = (m_model * m_view)[3];
+
+		std::cout << "origin : " << origin[0] << " " << origin[1] << " " << origin[2] << std::endl;
+
+		//glm::vec3 ray_nds = glm::vec3(u, v, 1.0f);
+
+		glm::vec4 ray_clip = glm::vec4(u, v, -1.0, 1.0);
+		glm::vec4 ray_eye = getInverseProjection() * ray_clip;
+
+		ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
+
+		glm::vec4 direction = glm::normalize(getInverseView() * getInverseModel() * ray_eye);
+		std::cout << "direction : " << direction[0] << " " << direction[1] << " " << direction[2] << std::endl;
+
+
+
+
+
+
+		glm::vec3 invR = glm::vec3(1.0f) / glm::vec3(direction);
+		glm::vec3 tbot = invR * (boxmin - glm::vec3(origin));
+		glm::vec3 ttop = invR * (boxmax - glm::vec3(origin));
+
+		// re-order intersections to find smallest and largest on each axis
+		glm::vec3 tmin = min(ttop, tbot);
+		glm::vec3 tmax = max(ttop, tbot);
+
+		// find the largest tmin and the smallest tmax
+		float largest_tmin = std::max(std::max(tmin[0], tmin[1]), std::max(tmin[0], tmin[2]));
+		float smallest_tmax = std::min(std::min(tmax[0], tmax[1]), std::min(tmax[0], tmax[2]));
+
+		float tnear = largest_tmin;
+		float tfar = smallest_tmax;
+
+		if (smallest_tmax > largest_tmin)
+		{
+			std::cout << "hit " << std::endl;
+		}
+
+		/*		}
+			}*/
+
+
+
+
+
 	}
 
 	glBindVertexArray(0);

@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/transform.hpp>
 
@@ -18,11 +19,18 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <algorithm>
 
 #include <vtkSmartPointer.h>
 #include <vtkImageData.h>
 #include <vtkDICOMImageReader.h>
 #include <vtkNIFTIImageReader.h>
+
+//
+//#include "opencv2/core/utility.hpp"
+//#include "opencv2/opencv.hpp"
+//#include "opencv2/imgproc/imgproc.hpp"
+//#include "opencv2/highgui/highgui.hpp"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -94,6 +102,57 @@ public:
 	glm::mat4 getMV()
 	{
 		return m_MV;
+	}
+	glm::mat4 getModelView()
+	{
+		return m_MV;
+	}
+	glm::mat4 inverseMat4(glm::mat4 M)
+	{
+		glm::mat4 tempInvMat = glm::transpose(M);
+		tempInvMat[3] = M[3] * -1.0f;
+
+		tempInvMat[0][3] = 0.0f;
+		tempInvMat[1][3] = 0.0f;
+		tempInvMat[2][3] = 0.0f;
+
+		tempInvMat[3][3] = 1.0f;
+
+		return tempInvMat;
+	}
+	glm::mat4 getView()
+	{
+		return m_view;
+	}
+	glm::mat4 getModel()
+	{
+		return m_model;
+	}
+	glm::mat4 getInverseView()
+	{
+		return inverseMat4(m_view);
+	}
+	glm::mat4 getInverseModel()
+	{
+		return inverseMat4(m_model);
+	}
+	glm::mat4 getProjection()
+	{
+		return m_projection;
+	}
+	glm::mat4 getInverseProjection()
+	{
+		// taken from http://bookofhook.com/mousepick.pdf
+		glm::mat4 tempInvMat(0.0f);
+		tempInvMat[0][0] = 1.0f / m_projection[0][0];
+		tempInvMat[1][1] = 1.0f / m_projection[1][1];
+		tempInvMat[2][3] = 1.0f / m_projection[3][2];
+		tempInvMat[3][2] = 1.0f / m_projection[2][3];
+		tempInvMat[3][3] = -m_projection[2][2] / (m_projection[3][2] * m_projection[2][3]);
+
+		//glm::mat4 temp = glm::inverse(m_projection);
+
+		return tempInvMat;
 	}
 	void setRenderOthroFlag(bool flag)
 	{
@@ -169,9 +228,10 @@ private:
 
 	glm::vec3 m_rotation = glm::vec3();
 	glm::vec3 m_camerPos = glm::vec3();
-	float m_zoom = 0;
+	float m_zoom = -5;
 	glm::mat4 m_MV;
 
+	glm::mat4 m_cameraMatrix = glm::mat4(1.0f);
 	glm::mat4 m_view = glm::mat4(1.0f);
 	glm::mat4 m_projection = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 3000.0f); // some default matrix
 	glm::mat4 m_model_color = glm::mat4(1.0);

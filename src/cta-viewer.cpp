@@ -135,7 +135,11 @@ int main()
 
 		renderer.render();
 
-		rcaster.setInverseCameraMatrix(renderer.getMV());
+		rcaster.setScreenHeight(display_h);
+		rcaster.setScreenWidth(display_w);
+		rcaster.setInverseProjection(renderer.getInverseProjection());
+		rcaster.setInverseModel(renderer.getInverseModel());
+		rcaster.setInverseView(renderer.getInverseView());
 
 		if (performRaytrace)
 		{

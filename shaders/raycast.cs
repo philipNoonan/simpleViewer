@@ -29,19 +29,25 @@ layout(binding = 2, rgba32f) uniform image2D outNormal;
 
 uniform int level = 8; //set me as dependent on texture size or minimum cutoff level
 
-uniform mat4 view; // == raycast pose * invK
+uniform mat4 invView; // == raycast pose * invK
+uniform mat4 invProj;
+uniform mat4 invModel;
+
 uniform float nearPlane;
 uniform float farPlane;
 uniform float step;
 uniform float largeStep;
 uniform vec3 volDim;
 uniform vec3 volSize;
+uniform uvec2 screenSize;
 
-uniform vec4 boxMaxs = vec4(512.0, 512.0, 512.0, 0.0f);
+uniform vec4 boxMaxs = vec4(1, 1, 1, 0.0f);
+uniform vec4 boxMins = vec4(-1, -1, -1, 0.0f);
+
 uniform uint maxSteps = 512;
-uniform float tStep = 2.0f;
-uniform float zNear = 1.0f;
-uniform float zFar = 2000.0f;
+uniform float tStep = 0.01f;
+uniform float zNear = -1.0f;
+uniform float zFar = 1.0f;
 
 vec3 getVolumePosition(uvec3 p)
 {
@@ -65,7 +71,7 @@ vec3 opMul(mat4 M, vec3 v)
 }
 
 float vs(uvec3 pos)
-{  
+{
     //vec4 data = imageLoad(volumeData, ivec3(pos));
     //return data.x; // convert short to float
 
@@ -93,16 +99,16 @@ float interpVol(vec3 pos)
 
 // intersect ray with a box
 // http://www.siggraph.org/education/materials/HyperGraph/raytrace/rtinter3.htm
-bool intersectBox(vec4 r_o, vec4 r_d, vec4 boxmax, inout float tnear, inout float tfar)
+bool intersectBox(vec4 r_o, vec4 r_d, vec4 boxmin, vec4 boxmax, inout float tnear, inout float tfar)
 {
     // compute intersection of ray with all six bbox planes
-    vec4 invR = vec4(1.0f) / r_d;
-    vec4 tbot = invR * -r_o;
-    vec4 ttop = invR * (boxmax - r_o);
+    vec3 invR = vec3(1.0f) / r_d.xyz;
+    vec3 tbot = invR * (boxmin.xyz - r_o.xyz);
+    vec3 ttop = invR * (boxmax.xyz - r_o.xyz);
 
     // re-order intersections to find smallest and largest on each axis
-    vec4 tmin = min(ttop, tbot);
-    vec4 tmax = max(ttop, tbot);
+    vec3 tmin = min(ttop, tbot);
+    vec3 tmax = max(ttop, tbot);
 
     // find the largest tmin and the smallest tmax
     float largest_tmin = max(max(tmin.x, tmin.y), max(tmin.x, tmin.z));
@@ -116,94 +122,104 @@ bool intersectBox(vec4 r_o, vec4 r_d, vec4 boxmax, inout float tnear, inout floa
 
 float sampleOctList(vec3 pos, int lod)
 {
-    return samp = texelFetch(volumeDataTexture, ivec3(pos), lod).x;
+    return texelFetch(volumeDataTexture, ivec3(pos), lod).x;
 }
 
 void raytraceOctList()
 {
-    // using texelfetches sample the voxel at entry point + half length of voxel at current LOD
+    //// using texelfetches sample the voxel at entry point + half length of voxel at current LOD
 
-    // two cases to detect
+    //// two cases to detect
 
-    // if voxel is -1 then we have hit a leaf node, do functionality here, such as update color integral 
+    //// if voxel is -1 then we have hit a leaf node, do functionality here, such as update color integral 
 
-    // if voxel is > 0 then go down a level and repeat texelfetch
+    //// if voxel is > 0 then go down a level and repeat texelfetch
 
-    // calculate exit point of voxel
+    //// calculate exit point of voxel
 
-    // early termination of ray tracing if certain threshold met. thresh tbd.
+    //// early termination of ray tracing if certain threshold met. thresh tbd.
 
-    // input to this shader is x,y pixel space coords, one thread per pixel
+    //// input to this shader is x,y pixel space coords, one thread per pixel
 
-    int lod = level;
-    vec2 pix = vec2(gl_GlobalInvocationID.xy);
-    vec3 texSize = vec3(textureSize(volumeDataTexture, lod).xyz);
+    //int lod = level;
+    //vec2 pix = vec2(gl_GlobalInvocationID.xy);
+    //vec3 texSize = vec3(textureSize(volumeDataTexture, lod).xyz);
 
-    if (pix.x >= texSize.x || pix.y >= texSize.y)
-    {
-        return;
-    }
+    //if (pix.x >= texSize.x || pix.y >= texSize.y)
+    //{
+    //    return;
+    //}
 
-    float u = (((pix.x / float(texSize.x)) * 2.0f) - 1.0f) * 1.0f; // right // PROBLEM??
-    float v = (((pix.y / float(texSize.y)) * 2.0f) - 1.0f) * 1.0f; // top
+    //float u = (((pix.x / float(texSize.x)) * 2.0f) - 1.0f) * 1.0f; // right // PROBLEM??
+    //float v = (((pix.y / float(texSize.y)) * 2.0f) - 1.0f) * 1.0f; // top
 
-    ivec4 boxMax0;
-
-
-    vec4 eyeRay_o;
-    vec4 eyeRay_d;
-
-    vec4 tempEyeRay_d = normalize(vec4(u, v, -zNear, 0.0f)); //-zNear???
-
-    eyeRay_o = vec4(view[3][0], view[3][1], view[3][2], 0.0f); // PROBLEM??
-    eyeRay_d.x = dot(tempEyeRay_d, vec4(view[0][0], view[1][0], view[2][0], 0.0f)); // PROBLEM?? // PROBLEM??
-    eyeRay_d.y = dot(tempEyeRay_d, vec4(view[0][1], view[1][1], view[2][1], 0.0f)); // PROBLEM?? // PROBLEM??
-    eyeRay_d.z = dot(tempEyeRay_d, vec4(view[0][2], view[1][2], view[2][2], 0.0f)); // PROBLEM?? // PROBLEM??
-    eyeRay_d.w = 1.0f;
-
-    float tNear, tFar;
-    vec4 volumeColor = vec4(0.0f);
+    //ivec4 boxMax0;
 
 
-    while (tFar < boxMax0[2]) // fixme
-    {
-        boxMax0 = vec4(int(boxMaxs[0]) >> lod, int(boxMaxs[1]) >> lod, int(boxMaxs[2]) >> lod, 0.0f);
-        
-        bool hit = intersectBox(eyeRay_o, eyeRay_d, boxMax0, tNear, tFar);
+    //vec4 eyeRay_o;
+    //vec4 eyeRay_d;
 
-        if (!hit)
-        {
-            imageStore(outVertex, ivec2(pix), volumeColor);
-            return;
-        }
+    //vec4 tempEyeRay_d = normalize(vec4(u, v, -zNear, 0.0f)); //-zNear???
 
-        float t = tNear + float(int(boxMaz0[0]) >> lod) / 2.0f; //back to front?
+    //eyeRay_o = vec4(view[3][0], view[3][1], view[3][2], 0.0f); // PROBLEM??
+    //eyeRay_d.x = dot(tempEyeRay_d, vec4(view[0][0], view[1][0], view[2][0], 0.0f)); // PROBLEM?? // PROBLEM??
+    //eyeRay_d.y = dot(tempEyeRay_d, vec4(view[0][1], view[1][1], view[2][1], 0.0f)); // PROBLEM?? // PROBLEM??
+    //eyeRay_d.z = dot(tempEyeRay_d, vec4(view[0][2], view[1][2], view[2][2], 0.0f)); // PROBLEM?? // PROBLEM??
+    //eyeRay_d.w = 1.0f;
 
-        vec4 pos = eyeRay_o + eyeRay_d * t;
+    //float tNear, tFar;
+    //vec4 volumeColor = vec4(0.0f);
 
-        float samp = sampleOctList(pos, lod);
+    //bool back = false;
 
-        if (samp == -1.0f)
-        {
-            volumeColor.xyz += vec3(0.1);
-        }
-        else
-        {
-            lod--;
-        }
+    //while (tFar < boxMax0[2]) // fixme
+    //{
+    //    boxMax0 = ivec4(int(boxMaxs[0]) >> lod, int(boxMaxs[1]) >> lod, int(boxMaxs[2]) >> lod, 0.0f);
 
-        tNear = tFar; // move to back face of voxel, and therefore front face of next voxel
 
-        // need to change the box max values too, change the name as well so it makes sense
 
-    if (volumeColor.w >= 1.0f)
-        {
-            imageStore(outVertex, ivec2(pix), volumeColor);
-            return;
-        }
-    }
 
-   
+    //    bool hit = intersectBox(eyeRay_o, eyeRay_d, boxMax0, tNear, tFar);
+
+    //    if (!hit)
+    //    {
+    //        imageStore(outVertex, ivec2(pix), volumeColor);
+    //        return;
+    //    }
+
+    //    float t = tNear + float(int(boxMax0[0]) >> lod) / 2.0f; //back to front?
+
+    //    vec4 pos = eyeRay_o + eyeRay_d * t;
+
+    //    float samp = sampleOctList(pos.xyz, lod);
+
+    //    if (samp == -1.0f)
+    //    {
+    //        volumeColor.xyz += vec3(0.1);
+    //        tNear = tFar; // move to back face of voxel, and therefore front face of next voxel
+    //        if (back)
+    //        {
+    //            lod++;
+    //        }
+
+    //        back = true;
+    //    }
+    //    else
+    //    {
+    //        lod--;
+    //        back = false;
+    //    }
+
+    //    // need to change the box max values too, change the name as well so it makes sense
+
+    //    if (volumeColor.w >= 1.0f)
+    //    {
+    //        imageStore(outVertex, ivec2(pix), volumeColor);
+    //        return;
+    //    }
+    //}
+
+
 
 
 }
@@ -214,43 +230,52 @@ void raycast()
     uvec2 imSize = imageSize(outVertex).xy;
 
     if ((pix.x >= imSize.x) || (pix.y >= imSize.y)) return;
-    //uint outputIndex = (pix.y * imSize.x) + pix.x;
 
-    float u = (((pix.x / float(imSize.x)) * 2.0f) - 1.0f) * 1.0f; // right // PROBLEM??
-    float v = (((pix.y / float(imSize.y)) * 2.0f) - 1.0f) * 1.0f; // top
+    // NDS coords
+    float u = (2.0 * float(pix.x)) / imSize.x - 1.0f;
+    float v = (2.0 * float(pix.y)) / imSize.y - 1.0f;
+
+
+    //float u = float(pix.x);
+    //float v = float(pix.y);
+
 
     vec4 boxMax0 = vec4(boxMaxs[0], boxMaxs[1], boxMaxs[2], 0.0f);
+    vec4 boxMin0 = vec4(boxMins[0], boxMins[1], boxMins[2], 0.0f);
 
-    vec4 eyeRay_o;
-    vec4 eyeRay_d;
+    vec4 origin;
+    vec4 direction;
 
-    vec4 tempEyeRay_d = normalize(vec4(u, v, -zNear, 0.0f)); //-zNear???
-
-    eyeRay_o = vec4(view[3][0], view[3][1], view[3][2], 0.0f); // PROBLEM??
-    eyeRay_d.x = dot(tempEyeRay_d, vec4(view[0][0], view[1][0], view[2][0], 0.0f)); // PROBLEM?? // PROBLEM??
-    eyeRay_d.y = dot(tempEyeRay_d, vec4(view[0][1], view[1][1], view[2][1], 0.0f)); // PROBLEM?? // PROBLEM??
-    eyeRay_d.z = dot(tempEyeRay_d, vec4(view[0][2], view[1][2], view[2][2], 0.0f)); // PROBLEM?? // PROBLEM??
-    eyeRay_d.w = 1.0f;
-
-    //eyeRay_o = vec4(view[0][3], view[1][3], view[2][3], 0.0f); // PROBLEM??
-    //eyeRay_d.x = dot(tempEyeRay_d, vec4(view[0][0], view[0][1], view[0][2], 0.0f)); // PROBLEM?? // PROBLEM??
-    //eyeRay_d.y = dot(tempEyeRay_d, vec4(view[1][0], view[1][1], view[1][2], 0.0f)); // PROBLEM?? // PROBLEM??
-    //eyeRay_d.z = dot(tempEyeRay_d, vec4(view[2][0], view[2][1], view[2][2], 0.0f)); // PROBLEM?? // PROBLEM??
-    //eyeRay_d.w = 1.0f;
+    origin = (invModel * invView)[3]; // make these un inverted iinverseres
 
 
     // vec4 eyeRay_o = vec4(view[3][0], view[3][1], view[3][2], 0.0f);
-    // vec4 eyeRay_d = vec4(rotate(view, vec3(pix.x, pix.y, 1.0f)), 1.0f);
+    // eyeRay_d = vec4(rotate(view, vec3(pix.x, pix.y, 1.0f)), 1.0f);
+    vec4 ray_eye = invProj * vec4(u, v, -1.0, 1.0f);
+    // vec4 ray_eye = vec4(u, v, -1.0, 1.0f);
+
+    ray_eye = vec4(ray_eye.xy, -1.0f, 0.0f);
+
+    direction = normalize(invModel * invView * ray_eye);
+    //eyeRay_d.w = 1.0f;
+    //eyeRay_d = (eyeRay_d);
+
 
     float tNear, tFar;
 
-    bool hit = intersectBox(eyeRay_o, eyeRay_d, boxMax0, tNear, tFar);
+    bool hit = intersectBox(origin, direction, boxMin0, boxMax0, tNear, tFar);
 
     if (!hit)
     {
         imageStore(outVertex, ivec2(pix), vec4(0.0f));
         return;
     }
+    //else
+    //{
+    //    imageStore(outVertex, ivec2(pix), vec4(1.0f, 1.0, 1.0, 0.2f));
+    //    //return;
+    //}
+
 
     if (tNear < zFar) tNear = zNear; // clamp to near plane
     if (tFar > zFar) tFar = zFar; // clamp to far plane
@@ -261,20 +286,26 @@ void raycast()
 
     for (uint i = 0; i < maxSteps; i++)
     {
-        vec4 pos = eyeRay_o + eyeRay_d * t;
+        vec4 pos = origin + direction * t;
+        vec4 texPos = (pos + 1.0) / 2.0f;
 
-        float samp = texture(volumeDataTexture, vec3(pos.x / 512.0f, pos.y / 512.0f, pos.z / 512.0f)).x;
+        if (texPos.x < 0 || texPos.y < 0 || texPos.z < 0 || texPos.x > 1 || texPos.y > 1 || texPos.z > 1)
+        {
+            t += tStep;
+            continue;
+        }
+        float samp = texture(volumeDataTexture, vec3(texPos.xyz)).x;
 
         //volumeColor = mix(volumeColor, vec4(samp), 0.5f);
         if (samp > 1300.0f)
         {
-            volumeColor += vec4(samp * 0.0005f); // PROBLEM??
+            volumeColor += vec4(samp * 0.001f); // PROBLEM??
         }
         if (volumeColor.x > 100.0f) break; // PROBLEM??
 
         t += tStep;
 
-        if (t < tNear) break;
+        //if (t > tFar) break;
 
 
     }
