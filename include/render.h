@@ -181,6 +181,7 @@ public:
 
 private:
 	GLSLProgram renderProg;
+	GLuint query[2];
 
 	GLFWwindow * m_window;
 
@@ -228,7 +229,7 @@ private:
 
 	glm::vec3 m_rotation = glm::vec3();
 	glm::vec3 m_camerPos = glm::vec3();
-	float m_zoom = -5;
+	float m_zoom = 5;
 	glm::mat4 m_MV;
 
 	glm::mat4 m_cameraMatrix = glm::mat4(1.0f);

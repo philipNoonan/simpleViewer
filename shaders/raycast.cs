@@ -3,7 +3,7 @@
 layout(local_size_x = 32, local_size_y = 32) in;
 
 layout(binding= 0) uniform sampler3D volumeDataTexture;
-layout(binding= 1) uniform sampler3D octListTexture;
+layout(binding= 1) uniform sampler3D octTreeTexture;
 
 //layout(binding= 1) uniform sampler3D volumeColorTexture;
 //layout(binding= 2) uniform sampler2D currentTextureColor;
@@ -125,100 +125,113 @@ float sampleOctList(vec3 pos, int lod)
     return texelFetch(volumeDataTexture, ivec3(pos), lod).x;
 }
 
-void raytraceOctList()
+void raytraceOctTree()
 {
-    //// using texelfetches sample the voxel at entry point + half length of voxel at current LOD
+    int lod = level;
+    uvec2 pix = gl_GlobalInvocationID.xy;
+    uvec2 imSize = imageSize(outVertex).xy;
 
-    //// two cases to detect
+    if ((pix.x >= imSize.x) || (pix.y >= imSize.y)) return;
 
-    //// if voxel is -1 then we have hit a leaf node, do functionality here, such as update color integral 
+    // NDS coords
+    float u = (2.0 * float(pix.x)) / imSize.x - 1.0f;
+    float v = (2.0 * float(pix.y)) / imSize.y - 1.0f;
 
-    //// if voxel is > 0 then go down a level and repeat texelfetch
-
-    //// calculate exit point of voxel
-
-    //// early termination of ray tracing if certain threshold met. thresh tbd.
-
-    //// input to this shader is x,y pixel space coords, one thread per pixel
-
-    //int lod = level;
-    //vec2 pix = vec2(gl_GlobalInvocationID.xy);
-    //vec3 texSize = vec3(textureSize(volumeDataTexture, lod).xyz);
-
-    //if (pix.x >= texSize.x || pix.y >= texSize.y)
-    //{
-    //    return;
-    //}
-
-    //float u = (((pix.x / float(texSize.x)) * 2.0f) - 1.0f) * 1.0f; // right // PROBLEM??
-    //float v = (((pix.y / float(texSize.y)) * 2.0f) - 1.0f) * 1.0f; // top
-
-    //ivec4 boxMax0;
+    ivec4 boxmax0;
+    ivec4 boxmin0;
 
 
-    //vec4 eyeRay_o;
-    //vec4 eyeRay_d;
+    vec4 origin;
+    vec4 direction;
 
-    //vec4 tempEyeRay_d = normalize(vec4(u, v, -zNear, 0.0f)); //-zNear???
+    origin = (invModel * invView)[3];
 
-    //eyeRay_o = vec4(view[3][0], view[3][1], view[3][2], 0.0f); // PROBLEM??
-    //eyeRay_d.x = dot(tempEyeRay_d, vec4(view[0][0], view[1][0], view[2][0], 0.0f)); // PROBLEM?? // PROBLEM??
-    //eyeRay_d.y = dot(tempEyeRay_d, vec4(view[0][1], view[1][1], view[2][1], 0.0f)); // PROBLEM?? // PROBLEM??
-    //eyeRay_d.z = dot(tempEyeRay_d, vec4(view[0][2], view[1][2], view[2][2], 0.0f)); // PROBLEM?? // PROBLEM??
-    //eyeRay_d.w = 1.0f;
+    vec4 ray_eye = invProj * vec4(u, v, -1.0, 1.0f);
 
-    //float tNear, tFar;
-    //vec4 volumeColor = vec4(0.0f);
+    ray_eye = vec4(ray_eye.xy, -1.0f, 0.0f);
 
-    //bool back = false;
+    direction = normalize(invModel * invView * ray_eye);
 
-    //while (tFar < boxMax0[2]) // fixme
-    //{
-    //    boxMax0 = ivec4(int(boxMaxs[0]) >> lod, int(boxMaxs[1]) >> lod, int(boxMaxs[2]) >> lod, 0.0f);
+
+    float tnear, tfar;
+    vec4 volumecolor = vec4(0.0f);
+
+    bool back = false;
+
+
+        boxmax0 = ivec4(int(boxMaxs[0]), int(boxMaxs[1]), int(boxMaxs[2]), 0.0f); 
+        boxmin0 = ivec4(int(boxMins[0]), int(boxMins[1]), int(boxMins[2]), 0.0f);
 
 
 
 
-    //    bool hit = intersectBox(eyeRay_o, eyeRay_d, boxMax0, tNear, tFar);
+        bool hit = intersectBox(origin, direction, boxmin0, boxmax0, tnear, tfar);
 
-    //    if (!hit)
-    //    {
-    //        imageStore(outVertex, ivec2(pix), volumeColor);
-    //        return;
-    //    }
+        float rayLength = distance(tfar, tnear);
+        float midpoint = rayLength / 2.0f;
 
-    //    float t = tNear + float(int(boxMax0[0]) >> lod) / 2.0f; //back to front?
+        if (!hit)
+        {
+            imageStore(outVertex, ivec2(pix), volumecolor);
+            return;
+        }
+        //else
+        //{
+        //    imageStore(outVertex, ivec2(pix), vec4(1.0f, 1.0, 1.0, midpoint));
+        //    return;
+        //}
 
-    //    vec4 pos = eyeRay_o + eyeRay_d * t;
+        //float rayLength = distance(tfar, tnear);
+        //float midpoint = rayLength / 2.0f;
 
-    //    float samp = sampleOctList(pos.xyz, lod);
+      //  float t = tnear + midpoint;
+    float t = tnear;
 
-    //    if (samp == -1.0f)
-    //    {
-    //        volumeColor.xyz += vec3(0.1);
-    //        tNear = tFar; // move to back face of voxel, and therefore front face of next voxel
-    //        if (back)
-    //        {
-    //            lod++;
-    //        }
+    for (uint i = 0; i < maxSteps; i++)
+    {
+        vec4 pos = origin + direction * t;
+        vec4 texPos = (pos + 1.0) / 2.0f;
 
-    //        back = true;
-    //    }
-    //    else
-    //    {
-    //        lod--;
-    //        back = false;
-    //    }
+        if (texPos.x < 0 || texPos.y < 0 || texPos.z < 0 || texPos.x > 1 || texPos.y > 1 || texPos.z > 1)
+        {
+            t += tStep;
+            continue;
+        }
 
-    //    // need to change the box max values too, change the name as well so it makes sense
 
-    //    if (volumeColor.w >= 1.0f)
-    //    {
-    //        imageStore(outVertex, ivec2(pix), volumeColor);
-    //        return;
-    //    }
-    //}
+        float samp = textureLod(octTreeTexture, vec3(texPos.xyz), 0).x;
+        t += tStep;
 
+        if (samp == 0.0f)
+        {
+            // this assumes local homogeneity
+            volumecolor += vec4(0.1f);
+            tnear = tfar; // move to back face of voxel, and therefore front face of next voxel
+            if (back)
+            {
+                lod++;
+            }
+
+            back = true;
+            //imageStore(outVertex, ivec2(pix), volumecolor);
+            //return;
+
+        }
+        else
+        {
+            lod--;
+            back = false;
+        }
+
+        // need to change the box max values too, change the name as well so it makes sense
+
+        if (volumecolor.w >= 1.0f)
+        {
+            break;
+        }
+    }
+
+    imageStore(outVertex, ivec2(pix), volumecolor);
 
 
 
@@ -368,8 +381,8 @@ vec3 getGradient(vec4 hit)
 
 void main()
 {
-    raycast();
-    //raytraceOctList();
+    //raycast();
+    raytraceOctTree();
 }
 
 

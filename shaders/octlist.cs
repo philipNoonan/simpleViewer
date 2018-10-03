@@ -148,7 +148,7 @@ bool traverseHPLevel()
     }
     else
     {
-        posEncode[target] = 0;
+        posEncode[target] = 123123;
 
         //pos[target] = vec4(-1, -2, -3, -4);
 

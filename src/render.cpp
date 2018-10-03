@@ -10,6 +10,10 @@ GLFWwindow * Render::loadGLFWWindow()
 	//glfwWindowHint(GLFW_REFRESH_RATE, 30);
 	glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glAlphaFunc(GL_GREATER, 0.1);
+	glEnable(GL_ALPHA_TEST);
 
 	m_window = glfwCreateWindow(1024, 1024, "simpleViewer CTA Demo", nullptr, nullptr);
 
@@ -48,6 +52,9 @@ void Render::compileAndLinkShader()
 		std::cerr << e.what() << std::endl;
 		exit(EXIT_FAILURE);
 	}
+
+	glGenQueries(2, query);
+
 }
 
 void Render::setLocations()
@@ -349,7 +356,8 @@ void Render::bindTexturesForRendering()
 }
 void Render::render()
 {
-
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	m_view = glm::lookAt(
 		glm::vec3(0, 0, m_zoom),           // Camera is here
@@ -374,7 +382,7 @@ void Render::render()
 	m_model_color = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
 
 	m_model_color = glm::rotate(m_model_color, glm::radians(m_rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-	m_model_color = glm::rotate(m_model_color, glm::radians(m_rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+	m_model_color = glm::rotate(m_model_color, glm::radians(180.0f + m_rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
 	m_model_color = glm::rotate(m_model_color, glm::radians(m_rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 	m_model = m_model_color;
 	glViewport(0, 0, w, h);
@@ -396,6 +404,8 @@ void Render::render()
 	//glm::mat4 transMV = glm::transpose(m_MV);
 
 	glBindVertexArray(m_VAO);
+
+
 	if (m_renderOrtho)
 	{
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -409,8 +419,6 @@ void Render::render()
 
 		glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, 0);
 	}
-
-
 	
 
 
@@ -432,6 +440,7 @@ void Render::render()
 
 	if (m_renderOctree)
 	{
+		//glBeginQuery(GL_TIME_ELAPSED, query[0]);
 
 		glEnableVertexAttribArray(6);
 		glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Oct);
@@ -454,6 +463,19 @@ void Render::render()
 		glDrawArraysInstanced(GL_TRIANGLES, 0, 36, m_octlistCount);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+
+		//glEndQuery(GL_TIME_ELAPSED);
+		//GLuint available = 0;
+		//while (!available) {
+		//	glGetQueryObjectuiv(query[0], GL_QUERY_RESULT_AVAILABLE, &available);
+		//}
+		//// elapsed time in nanoseconds
+		//GLuint64 elapsed;
+		//glGetQueryObjectui64vEXT(query[0], GL_QUERY_RESULT, &elapsed);
+		//auto hpTime = elapsed / 1000000.0;
+
+		//std::cout << "elapsed time : " << hpTime << std::endl;
+
 	}
 	
 	if (m_renderRaytrace)
@@ -470,68 +492,70 @@ void Render::render()
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-		//glm::vec4 origin = (m_view * m_model)[3];
-		glm::vec3 boxmin = glm::vec3(-1.0, -1.0, -1.0);
+	//	//glm::vec4 origin = (m_view * m_model)[3];
+	//	glm::vec3 boxmin = glm::vec3(-1.0, -1.0, -1.0);
 
-		glm::vec3 boxmax = glm::vec3(1.0, 1.0, 1.0);
+	//	glm::vec3 boxmax = glm::vec3(1.0, 1.0, 1.0);
 
-		/*	for (int i = 255; i < 256; i++)
-			{
-				for (int j = 255; j < 256; j++)
-				{
-					float u = (2.0 * float(i)) / 512.0 - 1.0f;
-					float v = (2.0 * float(j)) / 512.0 - 1.0f;
-	*/
-		float u = 0;
-		float v = 0;
+	//	/*	for (int i = 255; i < 256; i++)
+	//		{
+	//			for (int j = 255; j < 256; j++)
+	//			{
+	//				float u = (2.0 * float(i)) / 512.0 - 1.0f;
+	//				float v = (2.0 * float(j)) / 512.0 - 1.0f;
+	//*/
+	//	float u = 0;
+	//	float v = 0;
 
-		glm::vec4 origin = (m_model * m_view)[3];
+	//	glm::vec4 origin = (m_model * m_view)[3];
 
-		std::cout << "origin : " << origin[0] << " " << origin[1] << " " << origin[2] << std::endl;
+	//	std::cout << "origin : " << origin[0] << " " << origin[1] << " " << origin[2] << std::endl;
 
-		//glm::vec3 ray_nds = glm::vec3(u, v, 1.0f);
+	//	//glm::vec3 ray_nds = glm::vec3(u, v, 1.0f);
 
-		glm::vec4 ray_clip = glm::vec4(u, v, -1.0, 1.0);
-		glm::vec4 ray_eye = getInverseProjection() * ray_clip;
+	//	glm::vec4 ray_clip = glm::vec4(u, v, -1.0, 1.0);
+	//	glm::vec4 ray_eye = getInverseProjection() * ray_clip;
 
-		ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
+	//	ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
 
-		glm::vec4 direction = glm::normalize(getInverseView() * getInverseModel() * ray_eye);
-		std::cout << "direction : " << direction[0] << " " << direction[1] << " " << direction[2] << std::endl;
-
-
+	//	glm::vec4 direction = glm::normalize(getInverseView() * getInverseModel() * ray_eye);
+	//	std::cout << "direction : " << direction[0] << " " << direction[1] << " " << direction[2] << std::endl;
 
 
 
 
-		glm::vec3 invR = glm::vec3(1.0f) / glm::vec3(direction);
-		glm::vec3 tbot = invR * (boxmin - glm::vec3(origin));
-		glm::vec3 ttop = invR * (boxmax - glm::vec3(origin));
 
-		// re-order intersections to find smallest and largest on each axis
-		glm::vec3 tmin = min(ttop, tbot);
-		glm::vec3 tmax = max(ttop, tbot);
 
-		// find the largest tmin and the smallest tmax
-		float largest_tmin = std::max(std::max(tmin[0], tmin[1]), std::max(tmin[0], tmin[2]));
-		float smallest_tmax = std::min(std::min(tmax[0], tmax[1]), std::min(tmax[0], tmax[2]));
+	//	glm::vec3 invR = glm::vec3(1.0f) / glm::vec3(direction);
+	//	glm::vec3 tbot = invR * (boxmin - glm::vec3(origin));
+	//	glm::vec3 ttop = invR * (boxmax - glm::vec3(origin));
 
-		float tnear = largest_tmin;
-		float tfar = smallest_tmax;
+	//	// re-order intersections to find smallest and largest on each axis
+	//	glm::vec3 tmin = min(ttop, tbot);
+	//	glm::vec3 tmax = max(ttop, tbot);
 
-		if (smallest_tmax > largest_tmin)
-		{
-			std::cout << "hit " << std::endl;
-		}
+	//	// find the largest tmin and the smallest tmax
+	//	float largest_tmin = std::max(std::max(tmin[0], tmin[1]), std::max(tmin[0], tmin[2]));
+	//	float smallest_tmax = std::min(std::min(tmax[0], tmax[1]), std::min(tmax[0], tmax[2]));
 
-		/*		}
-			}*/
+	//	float tnear = largest_tmin;
+	//	float tfar = smallest_tmax;
+
+	//	if (smallest_tmax > largest_tmin)
+	//	{
+	//		std::cout << "hit " << std::endl;
+	//	}
+
+	//	/*		}
+	//		}*/
 
 
 
 
 
 	}
+
+
 
 	glBindVertexArray(0);
 

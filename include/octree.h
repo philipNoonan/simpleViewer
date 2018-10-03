@@ -38,6 +38,10 @@ public:
 	{
 		return m_bufferPosEncode;
 	}
+	GLuint getOctreeTexture()
+	{
+		return m_texture_hpOctree;
+	}
 	int getLength()
 	{
 		return m_totalSum;

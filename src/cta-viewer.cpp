@@ -63,7 +63,7 @@ void setVolume()
 
 	octree.init(); // move into the load volume when shaders are stable
 	renderer.setOctlistBuffer(octree.getOctlistBuffer());
-
+	rcaster.setOctreeTexture(octree.getOctreeTexture());
 
 	renderer.setPosBuffer(mcubes.getPosBuffer());
 	renderer.allocateBuffersFromMarchingCubes();

@@ -43,6 +43,10 @@ public:
 	{
 		m_textureVolume = V;
 	}
+	void setOctreeTexture(GLuint oct)
+	{
+		m_textureOctree = oct;
+	}
 	void setVertexTexture(GLuint vB)
 	{
 		m_textureVertices = vB;
@@ -107,6 +111,7 @@ private:
 	GLuint m_textureVolume;
 	GLuint m_textureVertices;
 	GLuint m_textureNormals;
+	GLuint m_textureOctree;
 
 	glm::mat4 m_invProj = glm::mat4(1.0f);
 	glm::mat4 m_model = glm::mat4(1.0f);

@@ -99,6 +99,9 @@ void RCaster::raycast()
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_3D, m_textureVolume);
 
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_3D, m_textureOctree);
+
 	/*glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_3D, m_textureVolumeColor);
 

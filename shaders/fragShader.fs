@@ -34,7 +34,8 @@ vec4 fromVolume()
 	vec4 tData = textureLod(currentTexture3D, vec3(TexCoord3D.x, TexCoord3D.y, TexCoord3D.z), float(level) );
 	//vec4 tData = imageLoad(volumeData, vec3(TexCoord.x * 512.0f, TexCoord.y * 512.0f, slice));
 	float outfloat = tData.x > 100 ? tData.x * 0.0005f : 0;
-	return vec4(outfloat.xxx, 1.0f);
+	//float alpha = outfloat > 0.1 ? 1 : 0;
+	return vec4(outfloat.xxx, 1.0);
 
 	//return vec4(1.0, 0.0, 0.0, 1.0);
 }
