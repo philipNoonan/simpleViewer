@@ -359,33 +359,24 @@ void Render::render()
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	m_view = glm::lookAt(
-		glm::vec3(0, 0, m_zoom),           // Camera is here
-		glm::vec3(0, 0, 0), // and looks here : at the same position, plus "direction"
-		glm::vec3(0.0f, 1.0f, 0.0f)                  // Head is up (set to 0,-1,0 to look upside-down)
-	);
+	glm::mat4 model = getModel();
+	glm::mat4 view = getView();
+	glm::mat4 projection = getProjection();
 
-	glm::mat4 m_view512 = glm::lookAt(
-		glm::vec3(0, 0, -m_zoom),           // Camera is here
-		glm::vec3(0, 0, 0), // and looks here : at the same position, plus "direction"
-		glm::vec3(0.0f, 1.0f, 0.0f)                  // Head is up (set to 0,-1,0 to look upside-down)
-	);
+	//glm::mat4 m_view512 = glm::lookAt(
+	//	glm::vec3(0, 0, -m_zoom),           // Camera is here
+	//	glm::vec3(0, 0, 0), // and looks here : at the same position, plus "direction"
+	//	glm::vec3(0.0f, 1.0f, 0.0f)                  // Head is up (set to 0,-1,0 to look upside-down)
+	//);
 
 	//std::cout << m_camerPos.x << " " << m_camerPos.y << " " << m_camerPos.z << std::endl;
-	int w, h;
-	glfwGetFramebufferSize(m_window, &w, &h);
-	m_projection = glm::perspective(glm::radians(45.0f), (float)w / (float)h, 0.1f, 1000.0f); // scaling the texture to the current window size seems to work
+	
+	//float zDist;
+	//zDist = ((float)512 * 1) / tan(45.0f * M_PI / 180.0f);
 
-	float zDist;
-	zDist = ((float)512 * 1) / tan(45.0f * M_PI / 180.0f);
+	//m_model_color = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
 
-	m_model_color = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
-
-	m_model_color = glm::rotate(m_model_color, glm::radians(m_rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-	m_model_color = glm::rotate(m_model_color, glm::radians(180.0f + m_rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-	m_model_color = glm::rotate(m_model_color, glm::radians(m_rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-	m_model = m_model_color;
-	glViewport(0, 0, w, h);
+	//	m_model = m_model_color;
 
 	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	renderProg.use();
@@ -395,8 +386,9 @@ void Render::render()
 
 	imageSize = glm::vec3(512, 512, 304);
 	glm::vec3 sVals(0, 0, m_slice);
-	MVP = m_projection * m_view * m_model_color;
-	m_MV = m_view * m_model_color;
+	MVP = projection * view * model;
+
+	//m_MV = m_view * m_model_color;
 	
 	//
 
@@ -451,9 +443,9 @@ void Render::render()
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		// set projectiopn and view mat
-		glUniformMatrix4fv(m_ProjectionID, 1, GL_FALSE, glm::value_ptr(m_projection));
-		glUniformMatrix4fv(m_ViewID, 1, GL_FALSE, glm::value_ptr(m_view));
-		glUniformMatrix4fv(m_ModelID, 1, GL_FALSE, glm::value_ptr(m_model));
+		glUniformMatrix4fv(m_ProjectionID, 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(m_ViewID, 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(m_ModelID, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(m_MvpID, 1, GL_FALSE, glm::value_ptr(MVP));
 
 
@@ -481,9 +473,9 @@ void Render::render()
 	if (m_renderRaytrace)
 	{
 		glUniformMatrix4fv(m_MvpID, 1, GL_FALSE, glm::value_ptr(MVP));
-		glUniformMatrix4fv(m_ProjectionID, 1, GL_FALSE, glm::value_ptr(m_projection));
-		glUniformMatrix4fv(m_ViewID, 1, GL_FALSE, glm::value_ptr(m_view));
-		glUniformMatrix4fv(m_ModelID, 1, GL_FALSE, glm::value_ptr(m_model));
+		glUniformMatrix4fv(m_ProjectionID, 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(m_ViewID, 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(m_ModelID, 1, GL_FALSE, glm::value_ptr(model));
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_standardTextureID);

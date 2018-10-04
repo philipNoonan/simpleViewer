@@ -44,10 +44,10 @@ uniform uvec2 screenSize;
 uniform vec4 boxMaxs = vec4(1, 1, 1, 0.0f);
 uniform vec4 boxMins = vec4(-1, -1, -1, 0.0f);
 
-uniform uint maxSteps = 512;
-uniform float tStep = 0.01f;
-uniform float zNear = -1.0f;
-uniform float zFar = 1.0f;
+uint maxSteps = 1024;
+float tStep = 0.01f;
+float zNear = -1.0f;
+float zFar = 1.0f;
 
 vec3 getVolumePosition(uvec3 p)
 {
@@ -127,7 +127,7 @@ float sampleOctList(vec3 pos, int lod)
 
 void raytraceOctTree()
 {
-    int lod = level;
+    int lod = 9;
     uvec2 pix = gl_GlobalInvocationID.xy;
     uvec2 imSize = imageSize(outVertex).xy;
 
@@ -159,67 +159,100 @@ void raytraceOctTree()
     bool back = false;
 
 
-        boxmax0 = ivec4(int(boxMaxs[0]), int(boxMaxs[1]), int(boxMaxs[2]), 0.0f); 
-        boxmin0 = ivec4(int(boxMins[0]), int(boxMins[1]), int(boxMins[2]), 0.0f);
+    boxmax0 = ivec4(int(boxMaxs[0]), int(boxMaxs[1]), int(boxMaxs[2]), 0.0f);
+    boxmin0 = ivec4(int(boxMins[0]), int(boxMins[1]), int(boxMins[2]), 0.0f);
 
 
 
 
-        bool hit = intersectBox(origin, direction, boxmin0, boxmax0, tnear, tfar);
+    bool hit = intersectBox(origin, direction, boxmin0, boxmax0, tnear, tfar);
 
-        float rayLength = distance(tfar, tnear);
-        float midpoint = rayLength / 2.0f;
+    float rayLength = distance(tfar, tnear);
+    //float midpoint = rayLength / 2.0f;
 
-        if (!hit)
-        {
-            imageStore(outVertex, ivec2(pix), volumecolor);
-            return;
-        }
-        //else
-        //{
-        //    imageStore(outVertex, ivec2(pix), vec4(1.0f, 1.0, 1.0, midpoint));
-        //    return;
-        //}
+    if (!hit)
+    {
+        imageStore(outVertex, ivec2(pix), volumecolor);
+        return;
+    }
+    //else
+    //{
+    //    imageStore(outVertex, ivec2(pix), vec4(1.0f, 1.0, 1.0, midpoint));
+    //    return;
+    //}
 
-        //float rayLength = distance(tfar, tnear);
-        //float midpoint = rayLength / 2.0f;
+    //float rayLength = distance(tfar, tnear);
+    //float midpoint = rayLength / 2.0f;
 
-      //  float t = tnear + midpoint;
-    float t = tnear;
+    //  float t = tnear + midpoint;
+    float t = tnear;// +midpoint;
 
     for (uint i = 0; i < maxSteps; i++)
     {
+        t = tnear + rayLength / 2.0f;
+
+
         vec4 pos = origin + direction * t;
+
         vec4 texPos = (pos + 1.0) / 2.0f;
 
         if (texPos.x < 0 || texPos.y < 0 || texPos.z < 0 || texPos.x > 1 || texPos.y > 1 || texPos.z > 1)
         {
-            t += tStep;
+            //t += tStep;
             continue;
         }
 
+        // change this into nearest neighhtbour or into texelfecth
+        //float samp = textureLod(octTreeTexture, vec3(texPos.xyz), lod).x;
+        float samp = texelFetch(octTreeTexture, ivec3(texPos.xyz * (512 >> lod)), lod).x; // i think this is fine, since we want to go to the corner of the voxel, i.e. the clipping from vec to ivec should do this for us
 
-        float samp = textureLod(octTreeTexture, vec3(texPos.xyz), 0).x;
-        t += tStep;
 
         if (samp == 0.0f)
         {
             // this assumes local homogeneity
-            volumecolor += vec4(0.1f);
-            tnear = tfar; // move to back face of voxel, and therefore front face of next voxel
+            volumecolor += vec4(0.010 * float(lod));
+            //tnear = tfar; // move to back face of voxel, and therefore front face of next voxel
             if (back)
             {
                 lod++;
+                back = true;
+                tnear = tnear + rayLength;
+                rayLength *= 2.0f;
+
+            }
+            else
+            {
+
+                tnear = tnear + rayLength;
+                back = true;
+
             }
 
-            back = true;
             //imageStore(outVertex, ivec2(pix), volumecolor);
             //return;
 
         }
-        else
+        else if (samp == -1.0f)
+        {
+            if (back)
+            {
+                lod++;
+                //back = true;
+                tnear = tnear + rayLength;
+                rayLength *= 2.0f;
+            }
+            else
+            {
+                tnear = tnear + rayLength;
+
+                back = true;
+
+            }
+        }
+        else // we are positive (or nan)
         {
             lod--;
+            rayLength /= 2.0f;
             back = false;
         }
 
@@ -227,11 +260,12 @@ void raytraceOctTree()
 
         if (volumecolor.w >= 1.0f)
         {
+
             break;
         }
     }
 
-    imageStore(outVertex, ivec2(pix), volumecolor);
+    imageStore(outVertex, ivec2(pix), vec4(volumecolor.xyz, 0.5));
 
 
 

@@ -71,6 +71,12 @@ public:
 	}
 	void setRotation(glm::vec3 R)
 	{
+		m_model = glm::mat4(1.0f);
+
+		m_model = glm::rotate(m_model, glm::radians(m_rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+		m_model = glm::rotate(m_model, glm::radians(180.0f + m_rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+		m_model = glm::rotate(m_model, glm::radians(m_rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+
 		m_rotation = R;
 	}
 	void setCameraPos(glm::vec3 P)
@@ -122,10 +128,17 @@ public:
 	}
 	glm::mat4 getView()
 	{
+		m_view = glm::lookAt(
+			glm::vec3(0, 0, m_zoom),           // Camera is here
+			glm::vec3(0, 0, 0), // and looks here : at the same position, plus "direction"
+			glm::vec3(0.0f, 1.0f, 0.0f)                  // Head is up (set to 0,-1,0 to look upside-down)
+		);
+
 		return m_view;
 	}
 	glm::mat4 getModel()
 	{
+
 		return m_model;
 	}
 	glm::mat4 getInverseView()
@@ -138,6 +151,11 @@ public:
 	}
 	glm::mat4 getProjection()
 	{
+		int w, h;
+		glfwGetFramebufferSize(m_window, &w, &h);
+		m_projection = glm::perspective(glm::radians(45.0f), (float)w / (float)h, 0.1f, 1000.0f); // scaling the texture to the current window size seems to work
+		glViewport(0, 0, w, h);
+
 		return m_projection;
 	}
 	glm::mat4 getInverseProjection()
