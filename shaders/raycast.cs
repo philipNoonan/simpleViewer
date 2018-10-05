@@ -2,16 +2,16 @@
 
 layout(local_size_x = 32, local_size_y = 32) in;
 
-layout(binding= 0) uniform sampler3D volumeDataTexture;
-layout(binding= 1) uniform sampler3D octTreeTexture;
+layout(binding = 0) uniform sampler3D volumeDataTexture;
+layout(binding = 1) uniform sampler3D octTreeTexture;
 
 //layout(binding= 1) uniform sampler3D volumeColorTexture;
 //layout(binding= 2) uniform sampler2D currentTextureColor;
-     
+
 layout(binding = 0, r32f) uniform image3D volumeData; // Gimage3D, where G = i, u, or blank, for int, u int, and floats respectively
 layout(binding = 1, rgba32f) uniform image2D outVertex;
 layout(binding = 2, rgba32f) uniform image2D outNormal;
-    //layout(binding = 1, r32f) uniform image2D volumeSlice;
+//layout(binding = 1, r32f) uniform image2D volumeSlice;
 //layout(binding = 3, rgba32f) uniform image2D volumeSliceNorm;
 //layout(binding = 2, rgba32f) uniform image3D volumeColor;
 
@@ -45,7 +45,7 @@ uniform vec4 boxMaxs = vec4(1, 1, 1, 0.0f);
 uniform vec4 boxMins = vec4(-1, -1, -1, 0.0f);
 
 uint maxSteps = 1024;
-float tStep = 0.01f;
+float tStep = 1.0f / 512.0f;
 float zNear = -1.0f;
 float zFar = 1.0f;
 
@@ -58,8 +58,8 @@ vec3 rotate(mat4 M, vec3 V)
 {
     // glsl and glm [col][row]
     return vec3(dot(vec3(M[0][0], M[1][0], M[2][0]), V),
-                dot(vec3(M[0][1], M[1][1], M[2][1]), V),
-                dot(vec3(M[0][2], M[1][2], M[2][2]), V));
+        dot(vec3(M[0][1], M[1][1], M[2][1]), V),
+        dot(vec3(M[0][2], M[1][2], M[2][2]), V));
 }
 
 vec3 opMul(mat4 M, vec3 v)
@@ -88,10 +88,10 @@ float interpVol(vec3 pos)
     ivec3 lower = max(base, ivec3(0));
     ivec3 upper = min(base + ivec3(1), ivec3(volSize) - ivec3(1));
     return (
-          ((vs(uvec3(lower.x, lower.y, lower.z)) * (1 - factor.x) + vs(uvec3(upper.x, lower.y, lower.z)) * factor.x) * (1 - factor.y)
-         + (vs(uvec3(lower.x, upper.y, lower.z)) * (1 - factor.x) + vs(uvec3(upper.x, upper.y, lower.z)) * factor.x) * factor.y) * (1 - factor.z)
+        ((vs(uvec3(lower.x, lower.y, lower.z)) * (1 - factor.x) + vs(uvec3(upper.x, lower.y, lower.z)) * factor.x) * (1 - factor.y)
+            + (vs(uvec3(lower.x, upper.y, lower.z)) * (1 - factor.x) + vs(uvec3(upper.x, upper.y, lower.z)) * factor.x) * factor.y) * (1 - factor.z)
         + ((vs(uvec3(lower.x, lower.y, upper.z)) * (1 - factor.x) + vs(uvec3(upper.x, lower.y, upper.z)) * factor.x) * (1 - factor.y)
-         + (vs(uvec3(lower.x, upper.y, upper.z)) * (1 - factor.x) + vs(uvec3(upper.x, upper.y, upper.z)) * factor.x) * factor.y) * factor.z
+            + (vs(uvec3(lower.x, upper.y, upper.z)) * (1 - factor.x) + vs(uvec3(upper.x, upper.y, upper.z)) * factor.x) * factor.y) * factor.z
         );
 }
 
@@ -196,7 +196,7 @@ void raytraceOctTree()
 
         vec4 texPos = (pos + 1.0) / 2.0f;
 
-        if (texPos.x < 0 || texPos.y < 0 || texPos.z < 0 || texPos.x > 1 || texPos.y > 1 || texPos.z > 1)
+        if (texPos.x <= 0 || texPos.y <= 0 || texPos.z <= 0 || texPos.x >= 1 || texPos.y >= 1 || texPos.z >= 1)
         {
             //t += tStep;
             continue;
@@ -209,8 +209,12 @@ void raytraceOctTree()
 
         if (samp == 0.0f)
         {
+            float sampTex = texture(volumeDataTexture, vec3(texPos.xyz)).x; // i think this is fine, since we want to go to the corner of the voxel, i.e. the clipping from vec to ivec should do this for us
+
             // this assumes local homogeneity
-            volumecolor += vec4(0.010 * float(lod));
+            volumecolor += vec4(texPos.z, texPos.z, texPos.z, 1.0);
+            //volumecolor += vec4(0.010 * float(lod));
+
             //tnear = tfar; // move to back face of voxel, and therefore front face of next voxel
             if (back)
             {
@@ -346,9 +350,10 @@ void raycast()
         //volumeColor = mix(volumeColor, vec4(samp), 0.5f);
         if (samp > 1300.0f)
         {
-            volumeColor += vec4(samp * 0.001f); // PROBLEM??
+            //volumeColor += vec4(samp * 0.001f); // PROBLEM??
+            volumeColor = vec4(texPos.z, texPos.z, texPos.z, 1.0);
         }
-        if (volumeColor.x > 100.0f) break; // PROBLEM??
+        if (volumeColor.w >= 1.0f) break; // PROBLEM??
 
         t += tStep;
 
@@ -357,7 +362,7 @@ void raycast()
 
     }
 
-    imageStore(outVertex, ivec2(pix), volumeColor / 100.0f);
+    imageStore(outVertex, ivec2(pix), volumeColor);
 
 
 }
@@ -379,34 +384,34 @@ vec3 getGradient(vec4 hit)
     vec3 gradient;
 
     gradient.x =
-              (((vs(uvec3(upper_lower.x, lower.y, lower.z)) - vs(uvec3(lower_lower.x, lower.y, lower.z))) * (1 - factor.x)
+        (((vs(uvec3(upper_lower.x, lower.y, lower.z)) - vs(uvec3(lower_lower.x, lower.y, lower.z))) * (1 - factor.x)
             + (vs(uvec3(upper_upper.x, lower.y, lower.z)) - vs(uvec3(lower_upper.x, lower.y, lower.z))) * factor.x) * (1 - factor.y)
             + ((vs(uvec3(upper_lower.x, upper.y, lower.z)) - vs(uvec3(lower_lower.x, upper.y, lower.z))) * (1 - factor.x)
-            + (vs(uvec3(upper_upper.x, upper.y, lower.z)) - vs(uvec3(lower_upper.x, upper.y, lower.z))) * factor.x) * factor.y) * (1 - factor.z)
-            + (((vs(uvec3(upper_lower.x, lower.y, upper.z)) - vs(uvec3(lower_lower.x, lower.y, upper.z))) * (1 - factor.x)
+                + (vs(uvec3(upper_upper.x, upper.y, lower.z)) - vs(uvec3(lower_upper.x, upper.y, lower.z))) * factor.x) * factor.y) * (1 - factor.z)
+        + (((vs(uvec3(upper_lower.x, lower.y, upper.z)) - vs(uvec3(lower_lower.x, lower.y, upper.z))) * (1 - factor.x)
             + (vs(uvec3(upper_upper.x, lower.y, upper.z)) - vs(uvec3(lower_upper.x, lower.y, upper.z))) * factor.x) * (1 - factor.y)
             + ((vs(uvec3(upper_lower.x, upper.y, upper.z)) - vs(uvec3(lower_lower.x, upper.y, upper.z))) * (1 - factor.x)
-            + (vs(uvec3(upper_upper.x, upper.y, upper.z)) - vs(uvec3(lower_upper.x, upper.y, upper.z))) * factor.x) * factor.y) * factor.z;
+                + (vs(uvec3(upper_upper.x, upper.y, upper.z)) - vs(uvec3(lower_upper.x, upper.y, upper.z))) * factor.x) * factor.y) * factor.z;
 
     gradient.y =
-          (((vs(uvec3(lower.x, upper_lower.y, lower.z)) - vs(uvec3(lower.x, lower_lower.y, lower.z))) * (1 - factor.x)
-        + (vs(uvec3(upper.x, upper_lower.y, lower.z)) - vs(uvec3(upper.x, lower_lower.y, lower.z))) * factor.x) * (1 - factor.y)
-        + ((vs(uvec3(lower.x, upper_upper.y, lower.z)) - vs(uvec3(lower.x, lower_upper.y, lower.z))) * (1 - factor.x)
-        + (vs(uvec3(upper.x, upper_upper.y, lower.z)) - vs(uvec3(upper.x, lower_upper.y, lower.z))) * factor.x) * factor.y) * (1 - factor.z)
+        (((vs(uvec3(lower.x, upper_lower.y, lower.z)) - vs(uvec3(lower.x, lower_lower.y, lower.z))) * (1 - factor.x)
+            + (vs(uvec3(upper.x, upper_lower.y, lower.z)) - vs(uvec3(upper.x, lower_lower.y, lower.z))) * factor.x) * (1 - factor.y)
+            + ((vs(uvec3(lower.x, upper_upper.y, lower.z)) - vs(uvec3(lower.x, lower_upper.y, lower.z))) * (1 - factor.x)
+                + (vs(uvec3(upper.x, upper_upper.y, lower.z)) - vs(uvec3(upper.x, lower_upper.y, lower.z))) * factor.x) * factor.y) * (1 - factor.z)
         + (((vs(uvec3(lower.x, upper_lower.y, upper.z)) - vs(uvec3(lower.x, lower_lower.y, upper.z))) * (1 - factor.x)
-        + (vs(uvec3(upper.x, upper_lower.y, upper.z)) - vs(uvec3(upper.x, lower_lower.y, upper.z))) * factor.x) * (1 - factor.y)
-        + ((vs(uvec3(lower.x, upper_upper.y, upper.z)) - vs(uvec3(lower.x, lower_upper.y, upper.z))) * (1 - factor.x)
-        + (vs(uvec3(upper.x, upper_upper.y, upper.z)) - vs(uvec3(upper.x, lower_upper.y, upper.z))) * factor.x) * factor.y) * factor.z;
+            + (vs(uvec3(upper.x, upper_lower.y, upper.z)) - vs(uvec3(upper.x, lower_lower.y, upper.z))) * factor.x) * (1 - factor.y)
+            + ((vs(uvec3(lower.x, upper_upper.y, upper.z)) - vs(uvec3(lower.x, lower_upper.y, upper.z))) * (1 - factor.x)
+                + (vs(uvec3(upper.x, upper_upper.y, upper.z)) - vs(uvec3(upper.x, lower_upper.y, upper.z))) * factor.x) * factor.y) * factor.z;
 
     gradient.z =
-          (((vs(uvec3(lower.x, lower.y, upper_lower.z)) - vs(uvec3(lower.x, lower.y, lower_lower.z))) * (1 - factor.x)
-        + (vs(uvec3(upper.x, lower.y, upper_lower.z)) - vs(uvec3(upper.x, lower.y, lower_lower.z))) * factor.x) * (1 - factor.y)
-        + ((vs(uvec3(lower.x, upper.y, upper_lower.z)) - vs(uvec3(lower.x, upper.y, lower_lower.z))) * (1 - factor.x)
-        + (vs(uvec3(upper.x, upper.y, upper_lower.z)) - vs(uvec3(upper.x, upper.y, lower_lower.z))) * factor.x) * factor.y) * (1 - factor.z)
+        (((vs(uvec3(lower.x, lower.y, upper_lower.z)) - vs(uvec3(lower.x, lower.y, lower_lower.z))) * (1 - factor.x)
+            + (vs(uvec3(upper.x, lower.y, upper_lower.z)) - vs(uvec3(upper.x, lower.y, lower_lower.z))) * factor.x) * (1 - factor.y)
+            + ((vs(uvec3(lower.x, upper.y, upper_lower.z)) - vs(uvec3(lower.x, upper.y, lower_lower.z))) * (1 - factor.x)
+                + (vs(uvec3(upper.x, upper.y, upper_lower.z)) - vs(uvec3(upper.x, upper.y, lower_lower.z))) * factor.x) * factor.y) * (1 - factor.z)
         + (((vs(uvec3(lower.x, lower.y, upper_upper.z)) - vs(uvec3(lower.x, lower.y, lower_upper.z))) * (1 - factor.x)
-        + (vs(uvec3(upper.x, lower.y, upper_upper.z)) - vs(uvec3(upper.x, lower.y, lower_upper.z))) * factor.x) * (1 - factor.y)
-        + ((vs(uvec3(lower.x, upper.y, upper_upper.z)) - vs(uvec3(lower.x, upper.y, lower_upper.z))) * (1 - factor.x)
-        + (vs(uvec3(upper.x, upper.y, upper_upper.z)) - vs(uvec3(upper.x, upper.y, lower_upper.z))) * factor.x) * factor.y) * factor.z;
+            + (vs(uvec3(upper.x, lower.y, upper_upper.z)) - vs(uvec3(upper.x, lower.y, lower_upper.z))) * factor.x) * (1 - factor.y)
+            + ((vs(uvec3(lower.x, upper.y, upper_upper.z)) - vs(uvec3(lower.x, upper.y, lower_upper.z))) * (1 - factor.x)
+                + (vs(uvec3(upper.x, upper.y, upper_upper.z)) - vs(uvec3(upper.x, upper.y, lower_upper.z))) * factor.x) * factor.y) * factor.z;
 
     return gradient * vec3(volDim.x / volSize.x, volDim.y / volSize.y, volDim.z / volSize.z) * (0.5f * 0.00003051944088f);
 

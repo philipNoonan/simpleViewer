@@ -19,6 +19,9 @@ void RCaster::compileAndLinkShader()
 		std::cerr << e.what() << std::endl;
 		exit(EXIT_FAILURE);
 	}
+
+	glGenQueries(2, query);
+
 }
 void RCaster::setLocations()
 {
@@ -51,7 +54,7 @@ void RCaster::allocateBuffers()
 
 void RCaster::raycast()
 {
-	//glBeginQuery(GL_TIME_ELAPSED, query[3]);
+	glBeginQuery(GL_TIME_ELAPSED, query[0]);
 
 
 
@@ -119,17 +122,17 @@ void RCaster::raycast()
 	glDispatchCompute(xWidth, yWidth, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
-	//glEndQuery(GL_TIME_ELAPSED);
-	//GLuint available = 0;
-	//while (!available) {
-	//	glGetQueryObjectuiv(query[3], GL_QUERY_RESULT_AVAILABLE, &available);
-	//}
+	glEndQuery(GL_TIME_ELAPSED);
+	GLuint available = 0;
+	while (!available) {
+		glGetQueryObjectuiv(query[0], GL_QUERY_RESULT_AVAILABLE, &available);
+	}
 	// elapsed time in nanoseconds
-	//GLuint64 elapsed;
-	//glGetQueryObjectui64vEXT(query[3], GL_QUERY_RESULT, &elapsed);
+	GLuint64 elapsed;
+	glGetQueryObjectui64vEXT(query[0], GL_QUERY_RESULT, &elapsed);
 	//raycastTime = elapsed / 1000000.0;
 
-	//std::cout << raycastTime << std::endl;
+	std::cout << elapsed / 1000000.0 << std::endl;
 
 	//cv::Mat testIm(m_screenHeight, m_screenWidth, CV_32FC4);
 

@@ -118,7 +118,7 @@ void Octree::buildTree()
 	glGetQueryObjectui64vEXT(query[0], GL_QUERY_RESULT, &elapsed);
 	auto hpTime = elapsed / 1000000.0;
 
-	std::cout << "octree build time : " << hpTime << std::endl;
+	//std::cout << "octree build time : " << hpTime << std::endl;
 
 	std::vector<float> sumData(1, 3);
 
@@ -127,7 +127,7 @@ void Octree::buildTree()
 	glGetTexImage(GL_TEXTURE_3D, 9, GL_RED, GL_FLOAT, sumData.data());
 	glBindTexture(GL_TEXTURE_3D, 0);
 
-	std::cout << "sum " << sumData[0] << std::endl;
+	//std::cout << "sum " << sumData[0] << std::endl;
 
 	m_totalSum = sumData[0];
 

@@ -1,6 +1,13 @@
 #version 430
-
 layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
+
+// In this 1D shader we traverse the histopyramid for each active voxel. 
+// For each path from top to bottom of the pyramid, 8 neighbouring voxels are read in,
+// to see if they are less than, equal to, or greater than the 1D index of the current thread's ID. 
+// If the current voxel value is less than the target index, then the taregt voxel is further along than it. 
+// If the current voxel is greater than the target index, then the target voxel in in a lower level of the pyramid.
+// See the paper for a better explanation http://heim.ifi.uio.no/~erikd/pdf/hpmarcher_draft.pdf
+
 
 // images
 layout(binding = 0, r32f) uniform image3D volumeData;
@@ -62,24 +69,6 @@ shared uint neighbors[8];
 // current = ivec4 x y z sum
 void scanHPLevel(uint target, int lod, inout uvec4 current)
 {
-    //vec3 testReadPos = vec3(current.xyz) + 1.0f;
-
-    //testReadPos /= vec3(textureSize(histoPyramidTexture, lod));
-
-    //float testValue;
-
-    //if (lod == 0)
-    //{
-    //    testValue = textureLod(histoPyramidBaseLevelTexture, testReadPos, lod).x * 8.0f;
-    //}
-    //else if (lod > 0)
-    //{
-    //    testValue = textureLod(histoPyramidTexture, testReadPos, lod).x * 8.0f;
-    //}
-
-    //if (lod < 8)
-    //{
-
     uint neighbors[8];
 
     if (lod == 0)
@@ -107,33 +96,7 @@ void scanHPLevel(uint target, int lod, inout uvec4 current)
         neighbors[6] = uint(texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[6].xyz), lod).x);
         neighbors[7] = uint(texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[7].xyz), lod).x);
     }
-    //else if (lod >= 7 && lod <= 8)
-    //{
-    //    neighbors[gl_LocalInvocationID.x] = uint(texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[gl_LocalInvocationID.x].xyz), lod).x);
-
-    //}
-    //else if (lod == 9)
-    //{
-    //    if (gl_LocalInvocationID.x < 8)
-    //    {
-    //        neighbors[gl_LocalInvocationID.x] = uint(texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[gl_LocalInvocationID.x].xyz), lod).x);
-
-    //    }
-
-
-    //}
-
-    //memoryBarrierShared();
-    //barrier();
-
-    //if (lod >= 7 && lod <= 8)
-    //{
-    //            nbors = neighbors;
-         
-    //}
-
-    //memoryBarrierShared();
-    //barrier();
+    
 
     uint acc = uint(current.w) + neighbors[0];
 
@@ -167,72 +130,6 @@ void scanHPLevel(uint target, int lod, inout uvec4 current)
             cmp[5] * neighbors[5] +
             cmp[6] * neighbors[6] +
             cmp[7] * neighbors[7];
-    //}
-    //else
-    //{
-    //    uint neighbors[8];
-
-    //    if (lod == 0)
-    //    {
-    //        neighbors[0] = uint(imageLoad(histoPyramidBaseLevel, ivec3(current.xyz)).x);
-    //        neighbors[1] = uint(imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[1].xyz)).x);
-    //        neighbors[2] = uint(imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[2].xyz)).x);
-    //        neighbors[3] = uint(imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[3].xyz)).x);
-
-    //        neighbors[4] = uint(imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[4].xyz)).x);
-    //        neighbors[5] = uint(imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[5].xyz)).x);
-    //        neighbors[6] = uint(imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[6].xyz)).x);
-    //        neighbors[7] = uint(imageLoad(histoPyramidBaseLevel, ivec3(current.xyz) + ivec3(cubeOffsets[7].xyz)).x);
-    //    }
-    //    else if (lod > 0)
-    //    {
-    //        neighbors[0] = uint(texelFetch(histoPyramidTexture, ivec3(current.xyz), lod).x);
-    //        neighbors[1] = uint(texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[1].xyz), lod).x);
-    //        neighbors[2] = uint(texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[2].xyz), lod).x);
-    //        neighbors[3] = uint(texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[3].xyz), lod).x);
-
-    //        neighbors[4] = uint(texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[4].xyz), lod).x);
-    //        neighbors[5] = uint(texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[5].xyz), lod).x);
-    //        neighbors[6] = uint(texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[6].xyz), lod).x);
-    //        neighbors[7] = uint(texelFetch(histoPyramidTexture, ivec3(current.xyz) + ivec3(cubeOffsets[7].xyz), lod).x);
-    //    }
-
-
-    //    uint acc = uint(current.w) + neighbors[0];
-
-    //    uint cmp[8];
-
-    //    cmp[0] = acc <= target ? 1 : 0;
-    //    acc += neighbors[1];
-    //    cmp[1] = acc <= target ? 1 : 0;
-    //    acc += neighbors[2];
-    //    cmp[2] = acc <= target ? 1 : 0;
-    //    acc += neighbors[3];
-    //    cmp[3] = acc <= target ? 1 : 0;
-    //    acc += neighbors[4];
-    //    cmp[4] = acc <= target ? 1 : 0;
-    //    acc += neighbors[5];
-    //    cmp[5] = acc <= target ? 1 : 0;
-    //    acc += neighbors[6];
-    //    cmp[6] = acc <= target ? 1 : 0;
-    //    cmp[7] = 0;
-
-    //    current += cubeOffsets[(cmp[0] + cmp[1] + cmp[2] + cmp[3] + cmp[4] + cmp[5] + cmp[6] + cmp[7])];
-    //    current[0] = current[0] * 2;
-    //    current[1] = current[1] * 2;
-    //    current[2] = current[2] * 2;
-    //    current[3] = current[3] +
-    //        cmp[0] * neighbors[0] +
-    //        cmp[1] * neighbors[1] +
-    //        cmp[2] * neighbors[2] +
-    //        cmp[3] * neighbors[3] +
-    //        cmp[4] * neighbors[4] +
-    //        cmp[5] * neighbors[5] +
-    //        cmp[6] * neighbors[6] +
-    //        cmp[7] * neighbors[7];
-
-    //}
-
     
 
 
@@ -253,13 +150,6 @@ bool traverseHPLevel()
 
     uvec4 cubePosition = uvec4(0); // x y z sum
 
-    // now traverse pyr from top to bottom depending on image size
-
-    // for loop for all levels using texel fetch and LOD
-    //if (texSize.x > 512)
-    //{
-    //    scanHPLevel(target, 9, cubePosition);
-    //}
     if (texSize.x > 256)
     {
         scanHPLevel(target, 8, cubePosition);
@@ -327,44 +217,10 @@ bool traverseHPLevel()
         //const vec3 normal = mix(forwardDifference0, forwardDifference1, diff);
 
 
-        //    vstore3(vertex, target * 6 + vertexNr * 2, VBOBuffer);
-        //    vstore3(normal, target * 6 + vertexNr * 2 + 1, VBOBuffer);
-        // if (!isnan(diff))
-        // {
-        //  vec3 tV = vertex / 256.0f;
-        // if (tV.x <0.2 || tV.y <0.2 || tV.z <=0.2)
-        // {
-
-        // }
-        //else
-        // {
-        // if (point0.x == 0 || point0.y == 0 || point0.z == 0)
-        //  {
-
-        // }
-        //  else
-        // {
-        // target is for each triangle
-        // the problem is hereerererrererererere
-        //pos[target * 3 + vertexNr] = vec4(vertex.xyz, 0.0f); // THIS IS VERY SLOW FOR SOME STRNAGE REASON, BECAUSE WE KEEP OPN CHANGEING THE SIZE AND PROBABLY THE LOCATION OF THIS GUY
-
-
 
         posEncode[target * 3 + vertexNr] = uint(vertex.x) << 20 | uint(vertex.y) << 10 | uint(vertex.z);
         
-        
-        // }
-        //norm[target * 3 + vertexNr] = normal;
-        //}
-
-
-        // }
-        // else
-        // {
-        //    pos[target * 3 + vertexNr] = vec3(0);
-        //     norm[target * 6 + vertexNr * 2] = normal;
-        // }
-
+        // output normals here if we want to calc it here rather than in vertshader stage
 
         ++vertexNr;
     }

@@ -405,7 +405,7 @@ void MCubes::histoPyramids()
 	glGetQueryObjectui64vEXT(query[0], GL_QUERY_RESULT, &elapsed);
 	auto hpTime = elapsed / 1000000.0;
 
-	std::cout << "elapsed time : " << hpTime << std::endl;
+	//std::cout << "elapsed time : " << hpTime << std::endl;
 
 	//std::vector<float> posData(m_totalSum * 4);
 	//std::vector<uint32_t> posDataOri(m_totalSum );
