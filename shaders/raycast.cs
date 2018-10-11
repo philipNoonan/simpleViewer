@@ -41,6 +41,9 @@ uniform vec3 volDim;
 uniform vec3 volSize;
 uniform uvec2 screenSize;
 
+uniform int useOctree;
+uniform float thresh;
+
 uniform vec4 boxMaxs = vec4(1, 1, 1, 0.0f);
 uniform vec4 boxMins = vec4(-1, -1, -1, 0.0f);
 
@@ -269,7 +272,7 @@ void raytraceOctTree()
         }
     }
 
-    imageStore(outVertex, ivec2(pix), vec4(volumecolor.xyz, 0.5));
+    imageStore(outVertex, ivec2(pix), volumecolor);
 
 
 
@@ -348,7 +351,7 @@ void raycast()
         float samp = texture(volumeDataTexture, vec3(texPos.xyz)).x;
 
         //volumeColor = mix(volumeColor, vec4(samp), 0.5f);
-        if (samp > 1300.0f)
+        if (samp > thresh)
         {
             //volumeColor += vec4(samp * 0.001f); // PROBLEM??
             volumeColor = vec4(texPos.z, texPos.z, texPos.z, 1.0);
@@ -420,8 +423,14 @@ vec3 getGradient(vec4 hit)
 
 void main()
 {
-    //raycast();
-    raytraceOctTree();
+    if (useOctree == 1)
+    {
+        raytraceOctTree();
+    }
+    else
+    {
+        raycast();
+    }
 }
 
 

@@ -83,7 +83,14 @@ public:
 	{
 		m_screenHeight = h;
 	}
-
+	void setFastRaytraceFlag(bool flg)
+	{
+		m_useOctree = flg;
+	}
+	void setThresh(float thr)
+	{
+		m_thresh = thr;
+	}
 private:
 
 	GLSLProgram raycastProg;
@@ -107,6 +114,11 @@ private:
 	GLuint m_volSizeID_r;
 	GLuint m_screenSizeID;
 	GLuint m_helpersSubroutineID;
+
+	GLuint m_threshID;
+
+	GLuint m_useOctreeID;
+
 	// textures
 	GLuint m_textureVolume;
 	GLuint m_textureVertices;
@@ -119,6 +131,10 @@ private:
 	glm::mat4 m_invView = glm::mat4(1.0f);
 
 	glm::mat4 m_invModel = glm::mat4(1.0f);
+
+	bool m_useOctree;
+
+	float m_thresh;
 
 	int m_screenWidth;
 	int m_screenHeight;

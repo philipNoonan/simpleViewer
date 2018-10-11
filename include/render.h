@@ -63,6 +63,7 @@ public:
 	void setVertPositions();
 	void allocateBuffers();
 	void allocateBuffersFromMarchingCubes();
+	void allocateBuffersForOctree();
 	void bindTexturesForRendering();
 	void render();
 	void setLevel(int L)
@@ -263,7 +264,7 @@ private:
 
 	bool m_renderOrtho = false;
 	bool m_renderMarchingCubes = false;
-	bool m_renderRaytrace = false;
+	bool m_renderRaytrace = false; bool m_renderFastRaytrace = true;
 	bool m_renderOctree = false;
 
 };

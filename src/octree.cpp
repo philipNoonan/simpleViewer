@@ -65,7 +65,7 @@ void Octree::allocateBuffers()
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, m_bufferPosEncode);
 	//glBufferData(GL_SHADER_STORAGE_BUFFER, 512*512*512 * sizeof(uint32_t), NULL, GL_STREAM_COPY); // some max size, look into this
 	glBufferStorage(GL_SHADER_STORAGE_BUFFER, 512 * 512 * 512 * sizeof(uint32_t) / 4, NULL, 0); // /4 for theroetical max packing fraction of a checkerboard worst case
-
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // unbind
 
 }
 

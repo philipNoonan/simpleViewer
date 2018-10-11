@@ -37,6 +37,11 @@ void RCaster::setLocations()
 	m_volSizeID_r = glGetUniformLocation(raycastProg.getHandle(), "volSize");
 	m_screenSizeID = glGetUniformLocation(raycastProg.getHandle(), "screenSize");
 
+	m_useOctreeID = glGetUniformLocation(raycastProg.getHandle(), "useOctree");
+
+	m_threshID = glGetUniformLocation(raycastProg.getHandle(), "thresh");
+
+
 }
 void RCaster::allocateTextures()
 {
@@ -76,8 +81,9 @@ void RCaster::raycast()
 	glUniformMatrix4fv(m_invViewID_r, 1, GL_FALSE, glm::value_ptr(m_invView));
 	glUniformMatrix4fv(m_invProjID_r, 1, GL_FALSE, glm::value_ptr(m_invProj));
 	glUniformMatrix4fv(m_invModelID_r, 1, GL_FALSE, glm::value_ptr(m_invModel));
+	glUniform1i(m_useOctreeID, m_useOctree);
+	glUniform1f(m_threshID, m_thresh);
 
-	
 	/*glUniform1f(m_nearPlaneID, 0.1);
 	glUniform1f(m_farPlaneID, 1000.0);
 	glUniform1f(m_stepID, step);

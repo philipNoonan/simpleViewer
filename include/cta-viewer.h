@@ -3,6 +3,8 @@
 #include "mcubes.h"
 #include "raycaster.h"
 #include "octree.h"
+#include "voxelizer.h"
+#include "meshModel.h"
 
 //#include "camera.hpp"
 
@@ -32,6 +34,8 @@ RCaster rcaster;
 
 Octree octree;
 
+Voxelizer voxelizer;
+
 //Camera camera;
 
 GLFWwindow * window;
@@ -51,7 +55,7 @@ glm::vec3 cameraPos = glm::vec3();
 glm::vec2 mousePos = glm::vec2();
 
 bool renderOrtho = true;
-bool performRaytrace = false;
+bool performRaytrace = false; bool performFastRaytrace = false;
 bool performMarchingCubes = false;
 bool performOctree = false;
 

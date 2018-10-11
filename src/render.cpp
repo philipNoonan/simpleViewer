@@ -293,6 +293,17 @@ void Render::allocateBuffersFromMarchingCubes()
 
 	glEnableVertexAttribArray(4);
 
+
+
+	glBindVertexArray(0);
+
+}
+
+void Render::allocateBuffersForOctree()
+{
+	glBindVertexArray(m_VAO);
+
+
 	// OCTRREE
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Oct);
 	glBufferData(GL_ARRAY_BUFFER, m_cubePoints.size() * sizeof(float), &m_cubePoints[0], GL_STATIC_DRAW);

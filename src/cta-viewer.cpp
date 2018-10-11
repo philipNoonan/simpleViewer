@@ -77,7 +77,8 @@ void setVolume()
 
 int main()
 {
-
+	std::vector<float> meshData(1, 0);
+	loadBinarySTLToVertArray("resources/vesselsBin.stl", meshData);
 	// start GLWF context
 	window = renderer.loadGLFWWindow();
 	int display_w, display_h;
@@ -91,6 +92,19 @@ int main()
 	renderer.setVertPositions();
 	
 	renderer.allocateBuffers();
+
+	voxelizer.init(); // MOVE ME WHEN THE SHADERS WORK
+
+	voxelizer.setVertexArray(meshData);
+	voxelizer.configInfo(1.0, meshData.size() / 9, 0.0, 256);
+	
+	voxelizer.voxelize(true);
+
+
+	octree.init(); // move into the load volume when shaders are stable
+	octree.setInputFloatVolume(voxelizer.getVolumeTexture());
+	renderer.setOctlistBuffer(octree.getOctlistBuffer());
+	renderer.allocateBuffersForOctree();
 
 
 	glEnable(GL_DEPTH_TEST);
@@ -113,6 +127,7 @@ int main()
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwGetFramebufferSize(window, &display_w, &display_h);
+		voxelizer.voxelize(false);
 
 		glfwPollEvents();
 		ImGui_ImplGlfwGL3_NewFrame();
@@ -140,6 +155,8 @@ int main()
 		rcaster.setInverseProjection(renderer.getInverseProjection());
 		rcaster.setInverseModel(renderer.getInverseModel());
 		rcaster.setInverseView(renderer.getInverseView());
+		rcaster.setFastRaytraceFlag(performFastRaytrace);
+		rcaster.setThresh(m_isoLevel);
 
 		if (performRaytrace)
 		{
@@ -213,7 +230,7 @@ int main()
 		//}
 
 		float oldIso = m_isoLevel;
-		ImGui::SliderFloat("isolevel", &m_isoLevel, 10.0f, 2000.0f);
+		ImGui::SliderFloat("isolevel", &m_isoLevel, 0.1f, 2000.0f);
 		if (m_isoLevel != oldIso)
 		{
 			mcubes.setIsolevel(m_isoLevel);
@@ -231,7 +248,8 @@ int main()
 		}
 		if (ImGui::Button("Ortho"))			renderOrtho ^= 1;		ImGui::SameLine(); ImGui::Checkbox("", &renderOrtho);
 
-		if (ImGui::Button("Raytrace"))			performRaytrace ^= 1;		ImGui::SameLine(); ImGui::Checkbox("", &performRaytrace);
+		if (ImGui::Button("Raytrace"))			performRaytrace ^= 1;		ImGui::SameLine(); ImGui::Checkbox("", &performRaytrace); 	ImGui::SameLine();	if (ImGui::Button("Fast"))			performFastRaytrace ^= 1;		ImGui::SameLine(); ImGui::Checkbox("", &performFastRaytrace);
+
 		if (ImGui::Button("Marching Cubes"))
 		{
 			mcubes.setIsolevel(m_isoLevel);

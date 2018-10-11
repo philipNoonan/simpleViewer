@@ -39,7 +39,9 @@ bool hpDiscriminator()
 
     float writeValue;
 
-    if (inputValue > isoLevel)
+
+    // if (inputValue > isoLevel)
+    if (inputValue == 0.0) // for the voxelization process
     {
         writeValue = 0.0f;
     }
