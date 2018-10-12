@@ -1,2 +1,5 @@
 build/
 resources/cta.nii.gz
+resources/brainBin.stl
+resources/vesselsBin.stl
+resources/graymatter.stl
