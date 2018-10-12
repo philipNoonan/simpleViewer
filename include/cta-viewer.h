@@ -1,3 +1,5 @@
+
+
 #include "render.h"
 #include "loader.h"
 #include "mcubes.h"
@@ -6,7 +8,8 @@
 #include "voxelizer.h"
 #include "meshModel.h"
 
-//#include "camera.hpp"
+#include "camera.hpp"
+
 
 #include <imgui.h>
 #include "imgui_impl_glfw_gl3.h"
@@ -36,7 +39,7 @@ Octree octree;
 
 Voxelizer voxelizer;
 
-//Camera camera;
+Camera camera;
 
 GLFWwindow * window;
 

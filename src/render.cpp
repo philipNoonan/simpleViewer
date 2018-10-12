@@ -1,5 +1,234 @@
 #include "render.h"
 
+void Render::GLFWCallbackWrapper::MousePositionCallback(GLFWwindow* window, double positionX, double positionY)
+{
+	s_application->MousePositionCallback(window, positionX, positionY);
+}
+
+void Render::GLFWCallbackWrapper::MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+{
+	s_application->MouseButtonCallback(window, button, action, mods);
+}
+
+
+void Render::GLFWCallbackWrapper::KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	s_application->KeyboardCallback(window, key, scancode, action, mods);
+}
+
+void Render::GLFWCallbackWrapper::SetApplication(Render* application)
+{
+	GLFWCallbackWrapper::s_application = application;
+}
+
+Render* Render::GLFWCallbackWrapper::s_application = nullptr;
+
+void Render::MousePositionCallback(GLFWwindow* window, double positionX, double positionY)
+{
+
+	int32_t dx = (int32_t)m_mousePos.x - positionX;
+	int32_t dy = (int32_t)m_mousePos.y - positionY;
+
+	if (mouseButtons.left)
+	{
+		m_rotation.x += dy * 1.25f * rotationSpeed;
+		m_rotation.y -= dx * 1.25f * rotationSpeed;
+		m_camera->rotate(glm::vec3(dy * m_camera->rotationSpeed, -dx * m_camera->rotationSpeed, 0.0f));
+		//viewUpdated = true;
+	}
+	if (mouseButtons.right) {
+		m_zoom += dy * .005f * zoomSpeed;
+		m_camera->translate(glm::vec3(-0.0f, 0.0f, dy * .005f * zoomSpeed));
+		//viewUpdated = true;
+	}
+	if (mouseButtons.middle) {
+		m_cameraPos.x -= dx * 0.01f;
+		m_cameraPos.y -= dy * 0.01f;
+		m_camera->translate(glm::vec3(-dx * 0.01f, -dy * 0.01f, 0.0f));
+		//viewUpdated = true;
+	}
+
+	m_mousePos.x = positionX;
+	m_mousePos.y = positionY;
+
+}
+void Render::MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+{
+
+	
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+	{
+		mouseButtons.left = true;
+	}
+	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+	{
+		mouseButtons.right = true;
+	}
+	if (button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_PRESS)
+	{
+		mouseButtons.middle = true;
+	}
+
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+	{
+		mouseButtons.left = false;
+	}
+	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE)
+	{
+		mouseButtons.right = false;
+	}
+	if (button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_RELEASE)
+	{
+		mouseButtons.middle = false;
+	}
+
+
+
+
+
+
+
+
+
+
+	//int w, h;
+	//glfwGetFramebufferSize(m_window, &w, &h);
+	//float zDist = 1500.0f;
+	//float halfHeightAtDist = zDist * tan(22.5f * M_PI / 180.0f);
+	//float halfWidthAtDistance = halfHeightAtDist * (float)w / (float)h; // notsure why this ratio is used here...
+
+																		// the height of the screen at the distance of the image is 2 * halfheight
+	//																	// to go from the middle to the top 
+
+	//																	//m_model_depth = glm::translate(glm::mat4(1.0f), glm::vec3(-halfWidthAtDistance, halfHeightAtDist - m_depth_height, -zDist));
+
+	//if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && m_selectInitialPoseFlag == true)
+	//{
+	//	if (m_mouse_pos_x > 32 && m_mouse_pos_x < m_depth_width + 32 && m_mouse_pos_y < 32 + 424 && m_mouse_pos_y > 32)
+	//	{
+	//		m_center_pixX = m_mouse_pos_x - 32;
+	//		m_center_pixY = m_mouse_pos_y - 32;
+
+	//		//std::cout << "x: " << m_center_pixX  << " y: " << m_center_pixY << std::endl;
+
+	//		// get depth value, from texture buffer or float array???
+
+	//		//// need to get depth pixel of this point
+	//		//float x = (pixX - m_cameraParams.z) * (1.0f / m_cameraParams.x) * depth.x;
+	//		//float y = (pixY - m_cameraParams.w) * (1.0f / m_cameraParams.y) * depth.x;
+	//		//float z = depth.x;
+
+	//		//m_cameraParams.x
+	//	}
+	//}
+
+
+	//if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+	//{
+	//	// m_depthPixelPoints2D.push_back(std::make_pair(m_mouse_pos_x, m_mouse_pos_y));
+	//	// get correct current offset and scakle for the window
+	//	int depth_pos_x = m_mouse_pos_x / m_render_scale_width;
+	//	int depth_pos_y = m_mouse_pos_y / m_render_scale_height;
+
+	//	//std::cout <<" x: " << m_mouse_pos_x << " y: " << m_mouse_pos_y << " xS: " << m_render_scale_width << " yS: " << m_render_scale_height << std::endl;
+	//	//std::cout << ((float)h / 424.0f) * m_mouse_pos_y << std::endl;
+
+
+	//	if (depth_pos_x < m_depth_width && depth_pos_y < m_depth_height)
+	//	{
+	//		m_depthPixelPoints2D.push_back(std::make_pair(depth_pos_x, depth_pos_y));
+	//		m_depthPointsFromBuffer.resize(m_depthPixelPoints2D.size() * 4); // for 4 floats per vertex (x,y,z, + padding)
+
+
+	//	}
+	//}
+	//if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+	//{
+	//	if (m_depthPixelPoints2D.size() > 0)
+	//	{
+	//		m_depthPixelPoints2D.pop_back();
+	//		m_depthPointsFromBuffer.resize(m_depthPixelPoints2D.size() * 4); // for 4 floats per vertex (x,y,z, + padding)
+
+	//	}
+	//	// pop_back entry on vector
+	//}
+
+	//if (m_depthPixelPoints2D.size() > 0 && action == GLFW_PRESS)
+	//{
+	//	std::cout << m_depthPixelPoints2D.size();
+	//	for (auto i : m_depthPixelPoints2D)
+	//	{
+	//		//std::cout << " x: " << i.first << " y: " << i.second << std::endl;
+	//	}
+	//}
+	//else if (m_depthPixelPoints2D.size() == 0 && action == GLFW_PRESS)
+	//{
+	//	std::cout << "no entries yet, left click points on depth image" << std::endl;
+	//}
+	////std::cout << "mouse button pressed: " << button << " " << action << " x: " <<  m_mouse_pos_x << " y: " << m_mouse_pos_y << std::endl;
+
+}
+
+void Render::KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	switch (action)
+	{
+	case GLFW_PRESS:
+
+		if (m_camera->firstperson)
+		{
+			switch (key)
+			{
+			case GLFW_KEY_W:
+				m_camera->keys.up = true;
+				break;
+			case GLFW_KEY_S:
+				m_camera->keys.down = true;
+				break;
+			case GLFW_KEY_A:
+				m_camera->keys.left = true;
+				break;
+			case GLFW_KEY_D:
+				m_camera->keys.right = true;
+				break;
+			}
+		}
+		break;
+
+	case GLFW_RELEASE:
+		if (m_camera->firstperson)
+		{
+			switch (key)
+			{
+			case GLFW_KEY_W:
+				m_camera->keys.up = false;
+				break;
+			case GLFW_KEY_S:
+				m_camera->keys.down = false;
+				break;
+			case GLFW_KEY_A:
+				m_camera->keys.left = false;
+				break;
+			case GLFW_KEY_D:
+				m_camera->keys.right = false;
+				break;
+			}
+		}
+		break;
+	}
+	
+	std::cout << m_camera->keys.up << std::endl;
+
+}
+
+void Render::SetCallbackFunctions()
+{
+	GLFWCallbackWrapper::SetApplication(this);
+	glfwSetCursorPosCallback(m_window, GLFWCallbackWrapper::MousePositionCallback);
+	glfwSetKeyCallback(m_window, GLFWCallbackWrapper::KeyboardCallback);
+	glfwSetMouseButtonCallback(m_window, GLFWCallbackWrapper::MouseButtonCallback);
+}
+
 GLFWwindow * Render::loadGLFWWindow()
 {
 

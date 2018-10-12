@@ -1,3 +1,7 @@
+#ifndef RENDER_H
+#define RENDER_H
+
+
 #define GLUT_NO_LIB_PRAGMA
 //##### OpenGL ######
 #include <GL/glew.h>
@@ -26,6 +30,8 @@
 #include <vtkDICOMImageReader.h>
 #include <vtkNIFTIImageReader.h>
 
+#include "camera.hpp"
+
 //
 //#include "opencv2/core/utility.hpp"
 //#include "opencv2/opencv.hpp"
@@ -35,11 +41,20 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+
+
+
 class Render
 {
 public:
 	Render() {};
 	~Render() {};
+
+	void SetCallbackFunctions();
+	void setCamera(Camera *cam)
+	{
+		m_camera = cam;
+	}
 
 	void cleanup()
 	{
@@ -82,7 +97,7 @@ public:
 	}
 	void setCameraPos(glm::vec3 P)
 	{
-		m_camerPos = P;
+		m_cameraPos = P;
 	}
 	void setZoom(float Z)
 	{
@@ -199,6 +214,42 @@ public:
 	}
 
 private:
+
+	struct {
+		bool left = false;
+		bool right = false;
+		bool middle = false;
+	} mouseButtons;
+
+	// this static wrapped clas was taken from BIC comment on https://stackoverflow.com/questions/7676971/pointing-to-a-function-that-is-a-class-member-glfw-setkeycallback
+	void MousePositionCallback(GLFWwindow* window, double positionX, double positionY);
+	void KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+	void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+
+	class GLFWCallbackWrapper
+	{
+	public:
+		GLFWCallbackWrapper() = delete;
+		GLFWCallbackWrapper(const GLFWCallbackWrapper&) = delete;
+		GLFWCallbackWrapper(GLFWCallbackWrapper&&) = delete;
+		~GLFWCallbackWrapper() = delete;
+
+		static void MousePositionCallback(GLFWwindow* window, double positionX, double positionY);
+		static void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+		static void KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+		static void SetApplication(Render *application);
+	private:
+		static Render* s_application;
+	};
+
+	Camera *m_camera;
+
+	float rotationSpeed = 1.0f;
+	float zoomSpeed = 1.0f;
+	glm::vec3 m_rotation = glm::vec3();
+	glm::vec3 m_cameraPos = glm::vec3();
+	glm::vec2 m_mousePos;
+
 	GLSLProgram renderProg;
 	GLuint query[2];
 
@@ -246,8 +297,9 @@ private:
 	GLuint m_fromTexture2DID;
 
 
-	glm::vec3 m_rotation = glm::vec3();
-	glm::vec3 m_camerPos = glm::vec3();
+	//glm::vec3 m_rotation = glm::vec3();
+
+	//glm::vec3 m_camerPos = glm::vec3();
 	float m_zoom = 5;
 	glm::mat4 m_MV;
 
@@ -268,3 +320,6 @@ private:
 	bool m_renderOctree = false;
 
 };
+
+
+#endif

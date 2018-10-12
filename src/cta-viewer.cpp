@@ -80,7 +80,7 @@ int main()
 	std::vector<float> meshData(1, 0);
 	std::vector<float> boxBot(3, 0);
 	std::vector<float> boxTop(3, 0);
-	loadBinarySTLToVertArray("resources/graymatterBin.stl", meshData);
+	loadBinarySTLToVertArray("resources/vesselsBin.stl", meshData);
 	getBoundingBox(meshData, boxTop, boxBot);
 
 	float longestEdge = boxTop[0] - boxBot[0];
@@ -95,12 +95,18 @@ int main()
 
 	ImGui::CreateContext();
 	ImGui_ImplGlfwGL3_Init(window, true);
-
+	renderer.SetCallbackFunctions();
 	renderer.compileAndLinkShader();
 	renderer.setLocations();
 	renderer.setVertPositions();
 	
 	renderer.allocateBuffers();
+
+	// Camera
+	camera.type = Camera::CameraType::firstperson;
+	//.setPerspective(45.0f, float(display_w) / float(display_h), 0.1, 1000.0f);
+
+	renderer.setCamera(&camera);
 
 	voxelizer.init(); // MOVE ME WHEN THE SHADERS WORK
 
@@ -140,6 +146,9 @@ int main()
 
 		glfwPollEvents();
 		ImGui_ImplGlfwGL3_NewFrame();
+
+
+
 
 		// Rendering
 		glViewport(0, 0, display_w, display_h);
@@ -357,7 +366,6 @@ int main()
 			renderer.setCameraPos(cameraPos);
 			mousePos.x = mPos.x;
 			mousePos.y = mPos.y;
-
 		}
 		if (io.MouseWheel != 0.0f)
 		{
@@ -370,6 +378,9 @@ int main()
 		ImGui::Render();
 		ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
 
+		camera.update(0.01f);
+
+		std::cout << camera.matrices.view[3][0] << std::endl;
 
 		glfwSwapBuffers(window);
 

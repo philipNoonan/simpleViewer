@@ -1,3 +1,7 @@
+#ifndef CAMERA_H
+#define CAMERA_H
+
+
 /*
 * Basic camera class
 *
@@ -203,3 +207,5 @@ public:
 	}
 
 };
+
+#endif
