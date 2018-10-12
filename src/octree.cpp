@@ -118,7 +118,7 @@ void Octree::buildTree()
 	glGetQueryObjectui64vEXT(query[0], GL_QUERY_RESULT, &elapsed);
 	auto hpTime = elapsed / 1000000.0;
 
-	//std::cout << "octree build time : " << hpTime << std::endl;
+	std::cout << "octree build time : " << hpTime << std::endl;
 
 	std::vector<float> sumData(1, 3);
 

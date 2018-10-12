@@ -15,7 +15,7 @@ void loadBinarySTLToVertArray(std::string file, std::vector<float> &tris) {
 	uint32_t numTriangles = *(uint32_t *)buffer;
 	tris.resize(numTriangles * 9,0);
 
-	for (uint32_t i = 0; i < tris.size() - 9; i+=9) {
+	for (uint32_t i = 0; i < tris.size(); i+=9) {
 
 		in.read((char *)points, 12 * sizeof(float));
 		for (int j = 3; j < 12; j++) 
@@ -26,4 +26,20 @@ void loadBinarySTLToVertArray(std::string file, std::vector<float> &tris) {
 
 	}
 	in.close();
+}
+
+
+void getBoundingBox(const std::vector<float> vs, std::vector<float> &top, std::vector<float> &bot) {
+	top[0] = bot[0] = vs[0];
+	top[1] = bot[1] = vs[1];
+	top[2] = bot[2] = vs[2];
+
+	for (std::vector<float>::const_iterator it = vs.cbegin(); it != vs.cend(); it+=3) {
+		if (*(it + 0) > top[0]) top[0] = *(it + 0);
+		if (*(it + 1) > top[1]) top[1] = *(it + 1);
+		if (*(it + 2) > top[2]) top[2] = *(it + 2);
+		if (*(it + 0) < bot[0]) bot[0] = *(it + 0);
+		if (*(it + 1) < bot[1]) bot[1] = *(it + 1);
+		if (*(it + 2) < bot[2]) bot[2] = *(it + 2);
+	}
 }

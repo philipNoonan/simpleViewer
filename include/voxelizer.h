@@ -26,7 +26,7 @@
 struct VoxelizerInfo {
 	float unit;
 	uint32_t n_triangles;
-	float bbox_min;
+	float bbox_min[3];
 	uint32_t gridsize;
 };
 
@@ -36,11 +36,13 @@ public:
 	Voxelizer() {};
 	~Voxelizer() {};
 
-	void configInfo(float un, uint32_t nTri, float bbmin, uint32_t grds)
+	void configInfo(float un, uint32_t nTri, std::vector<float> bbmin, uint32_t grds)
 	{
 		m_info.unit = un;
 		m_info.n_triangles = nTri;
-		m_info.bbox_min = bbmin;
+		m_info.bbox_min[0] = bbmin[0];
+		m_info.bbox_min[1] = bbmin[1];
+		m_info.bbox_min[2] = bbmin[2];
 		m_info.gridsize = grds;
 	}
 
@@ -77,6 +79,7 @@ private:
 	VoxelizerInfo m_info;
 
 
+	GLuint query[2];
 
 
 

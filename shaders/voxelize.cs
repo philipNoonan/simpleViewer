@@ -35,7 +35,7 @@ layout (binding = 0, std430) buffer infoBlock
 {
     float unit;
     uint n_triangles;
-    float bbox_min;
+    float[3] bbox_min;
     uint gridsize;
 
 } info;
@@ -62,14 +62,16 @@ void voxelize_triangle()
     vec3 delta_p = vec3(info.unit, info.unit, info.unit);
     vec3 c = vec3(0.0f, 0.0f, 0.0f); // critical point
 
+    vec3 bboxMin = vec3(info.bbox_min[0], info.bbox_min[1], info.bbox_min[2]);
+
     if (thread_id < info.n_triangles) // just use global invocations rather than keep on looping?
     { // every thread works on specific triangles in its stride
         uint t = thread_id * 9; // triangle contains 9 vertices
 
         // COMPUTE COMMON TRIANGLE PROPERTIES
-        vec3 v0 = vec3(triangle_data[t], triangle_data[t + 1], triangle_data[t + 2]) + vec3(61, 110, 37); // get v0 and move to origin
-        vec3 v1 = vec3(triangle_data[t + 3], triangle_data[t + 4], triangle_data[t + 5]) + vec3(61, 110, 37); // get v1 and move to origin
-        vec3 v2 = vec3(triangle_data[t + 6], triangle_data[t + 7], triangle_data[t + 8]) + vec3(61, 110, 37); // get v2 and move to origin
+        vec3 v0 = vec3(triangle_data[t], triangle_data[t + 1], triangle_data[t + 2]) - bboxMin; // get v0 and move to origin
+        vec3 v1 = vec3(triangle_data[t + 3], triangle_data[t + 4], triangle_data[t + 5]) - bboxMin; // get v1 and move to origin
+        vec3 v2 = vec3(triangle_data[t + 6], triangle_data[t + 7], triangle_data[t + 8]) - bboxMin; // get v2 and move to origin
         vec3 e0 = v1 - v0;
         vec3 e1 = v2 - v1;
         vec3 e2 = v0 - v2;

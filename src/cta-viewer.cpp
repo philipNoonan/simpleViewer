@@ -78,7 +78,16 @@ void setVolume()
 int main()
 {
 	std::vector<float> meshData(1, 0);
-	loadBinarySTLToVertArray("resources/vesselsBin.stl", meshData);
+	std::vector<float> boxBot(3, 0);
+	std::vector<float> boxTop(3, 0);
+	loadBinarySTLToVertArray("resources/graymatterBin.stl", meshData);
+	getBoundingBox(meshData, boxTop, boxBot);
+
+	float longestEdge = boxTop[0] - boxBot[0];
+	if (boxTop[1] - boxBot[1] > longestEdge) longestEdge = boxTop[1] - boxBot[1];
+	if (boxTop[2] - boxBot[2] > longestEdge) longestEdge = boxTop[2] - boxBot[2];
+
+
 	// start GLWF context
 	window = renderer.loadGLFWWindow();
 	int display_w, display_h;
@@ -96,7 +105,7 @@ int main()
 	voxelizer.init(); // MOVE ME WHEN THE SHADERS WORK
 
 	voxelizer.setVertexArray(meshData);
-	voxelizer.configInfo(1.0, meshData.size() / 9, 0.0, 256);
+	voxelizer.configInfo(1.0f / (512.0f / longestEdge), meshData.size() / 9, boxBot, 512);
 	
 	voxelizer.voxelize(true);
 

@@ -18,6 +18,9 @@ void Voxelizer::compileAndLinkShader()
 		std::cerr << e.what() << std::endl;
 		exit(EXIT_FAILURE);
 	}
+
+	glGenQueries(2, query);
+
 }
 
 void Voxelizer::setLocations() 
@@ -54,10 +57,12 @@ void Voxelizer::allocateBuffers()
 
 void Voxelizer::voxelize(bool first)
 {
+	glBeginQuery(GL_TIME_ELAPSED, query[0]);
+
 	voxelizerProg.use();
 
 	glBindImageTexture(0, m_textureVolume, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
-
+	uint32_t sizeVec = sizeof(VoxelizerInfo);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_infoSSBO);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(VoxelizerInfo), &m_info, GL_STATIC_DRAW);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_infoSSBO);
@@ -82,5 +87,15 @@ void Voxelizer::voxelize(bool first)
 	glDispatchCompute(xWidth, 1, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
+	glEndQuery(GL_TIME_ELAPSED);
+	GLuint available = 0;
+	while (!available) {
+		glGetQueryObjectuiv(query[0], GL_QUERY_RESULT_AVAILABLE, &available);
+	}
+	// elapsed time in nanoseconds
+	GLuint64 elapsed;
+	glGetQueryObjectui64vEXT(query[0], GL_QUERY_RESULT, &elapsed);
+	auto vxTime = elapsed / 1000000.0;
+	//std::cout << "voxelizer time : " << vxTime << std::endl;
 
 }
