@@ -289,11 +289,6 @@ void raycast()
     float u = (2.0 * float(pix.x)) / imSize.x - 1.0f;
     float v = (2.0 * float(pix.y)) / imSize.y - 1.0f;
 
-
-    //float u = float(pix.x);
-    //float v = float(pix.y);
-
-
     vec4 boxMax0 = vec4(boxMaxs[0], boxMaxs[1], boxMaxs[2], 0.0f);
     vec4 boxMin0 = vec4(boxMins[0], boxMins[1], boxMins[2], 0.0f);
 
@@ -302,18 +297,10 @@ void raycast()
 
     origin = (invModel * invView)[3]; // make these un inverted iinverseres
 
-
-    // vec4 eyeRay_o = vec4(view[3][0], view[3][1], view[3][2], 0.0f);
-    // eyeRay_d = vec4(rotate(view, vec3(pix.x, pix.y, 1.0f)), 1.0f);
     vec4 ray_eye = invProj * vec4(u, v, -1.0, 1.0f);
-    // vec4 ray_eye = vec4(u, v, -1.0, 1.0f);
-
     ray_eye = vec4(ray_eye.xy, -1.0f, 0.0f);
 
     direction = normalize(invModel * invView * ray_eye);
-    //eyeRay_d.w = 1.0f;
-    //eyeRay_d = (eyeRay_d);
-
 
     float tNear, tFar;
 

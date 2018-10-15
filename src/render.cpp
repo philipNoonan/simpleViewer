@@ -10,10 +10,19 @@ void Render::GLFWCallbackWrapper::MouseButtonCallback(GLFWwindow* window, int bu
 	s_application->MouseButtonCallback(window, button, action, mods);
 }
 
+void Render::GLFWCallbackWrapper::ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	s_application->ScrollCallback(window, xoffset, yoffset);
+}
 
 void Render::GLFWCallbackWrapper::KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	s_application->KeyboardCallback(window, key, scancode, action, mods);
+}
+
+void Render::GLFWCallbackWrapper::WindowSizeCallback(GLFWwindow* window, int width, int height)
+{
+	s_application->WindowSizeCallback(window, width, height);
 }
 
 void Render::GLFWCallbackWrapper::SetApplication(Render* application)
@@ -31,8 +40,8 @@ void Render::MousePositionCallback(GLFWwindow* window, double positionX, double 
 
 	if (mouseButtons.left)
 	{
-		m_rotation.x += dy * 1.25f * rotationSpeed;
-		m_rotation.y -= dx * 1.25f * rotationSpeed;
+		m_rotation.x += dy * 1.25f * m_camera->rotationSpeed;
+		m_rotation.y -= dx * 1.25f * m_camera->rotationSpeed;
 		m_camera->rotate(glm::vec3(dy * m_camera->rotationSpeed, -dx * m_camera->rotationSpeed, 0.0f));
 		//viewUpdated = true;
 	}
@@ -44,7 +53,7 @@ void Render::MousePositionCallback(GLFWwindow* window, double positionX, double 
 	if (mouseButtons.middle) {
 		m_cameraPos.x -= dx * 0.01f;
 		m_cameraPos.y -= dy * 0.01f;
-		m_camera->translate(glm::vec3(-dx * 0.01f, -dy * 0.01f, 0.0f));
+		m_camera->translate(glm::vec3(-dx * 0.01f, dy * 0.01f, 0.0f));
 		//viewUpdated = true;
 	}
 
@@ -82,91 +91,12 @@ void Render::MouseButtonCallback(GLFWwindow* window, int button, int action, int
 		mouseButtons.middle = false;
 	}
 
+}
 
-
-
-
-
-
-
-
-
-	//int w, h;
-	//glfwGetFramebufferSize(m_window, &w, &h);
-	//float zDist = 1500.0f;
-	//float halfHeightAtDist = zDist * tan(22.5f * M_PI / 180.0f);
-	//float halfWidthAtDistance = halfHeightAtDist * (float)w / (float)h; // notsure why this ratio is used here...
-
-																		// the height of the screen at the distance of the image is 2 * halfheight
-	//																	// to go from the middle to the top 
-
-	//																	//m_model_depth = glm::translate(glm::mat4(1.0f), glm::vec3(-halfWidthAtDistance, halfHeightAtDist - m_depth_height, -zDist));
-
-	//if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && m_selectInitialPoseFlag == true)
-	//{
-	//	if (m_mouse_pos_x > 32 && m_mouse_pos_x < m_depth_width + 32 && m_mouse_pos_y < 32 + 424 && m_mouse_pos_y > 32)
-	//	{
-	//		m_center_pixX = m_mouse_pos_x - 32;
-	//		m_center_pixY = m_mouse_pos_y - 32;
-
-	//		//std::cout << "x: " << m_center_pixX  << " y: " << m_center_pixY << std::endl;
-
-	//		// get depth value, from texture buffer or float array???
-
-	//		//// need to get depth pixel of this point
-	//		//float x = (pixX - m_cameraParams.z) * (1.0f / m_cameraParams.x) * depth.x;
-	//		//float y = (pixY - m_cameraParams.w) * (1.0f / m_cameraParams.y) * depth.x;
-	//		//float z = depth.x;
-
-	//		//m_cameraParams.x
-	//	}
-	//}
-
-
-	//if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
-	//{
-	//	// m_depthPixelPoints2D.push_back(std::make_pair(m_mouse_pos_x, m_mouse_pos_y));
-	//	// get correct current offset and scakle for the window
-	//	int depth_pos_x = m_mouse_pos_x / m_render_scale_width;
-	//	int depth_pos_y = m_mouse_pos_y / m_render_scale_height;
-
-	//	//std::cout <<" x: " << m_mouse_pos_x << " y: " << m_mouse_pos_y << " xS: " << m_render_scale_width << " yS: " << m_render_scale_height << std::endl;
-	//	//std::cout << ((float)h / 424.0f) * m_mouse_pos_y << std::endl;
-
-
-	//	if (depth_pos_x < m_depth_width && depth_pos_y < m_depth_height)
-	//	{
-	//		m_depthPixelPoints2D.push_back(std::make_pair(depth_pos_x, depth_pos_y));
-	//		m_depthPointsFromBuffer.resize(m_depthPixelPoints2D.size() * 4); // for 4 floats per vertex (x,y,z, + padding)
-
-
-	//	}
-	//}
-	//if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
-	//{
-	//	if (m_depthPixelPoints2D.size() > 0)
-	//	{
-	//		m_depthPixelPoints2D.pop_back();
-	//		m_depthPointsFromBuffer.resize(m_depthPixelPoints2D.size() * 4); // for 4 floats per vertex (x,y,z, + padding)
-
-	//	}
-	//	// pop_back entry on vector
-	//}
-
-	//if (m_depthPixelPoints2D.size() > 0 && action == GLFW_PRESS)
-	//{
-	//	std::cout << m_depthPixelPoints2D.size();
-	//	for (auto i : m_depthPixelPoints2D)
-	//	{
-	//		//std::cout << " x: " << i.first << " y: " << i.second << std::endl;
-	//	}
-	//}
-	//else if (m_depthPixelPoints2D.size() == 0 && action == GLFW_PRESS)
-	//{
-	//	std::cout << "no entries yet, left click points on depth image" << std::endl;
-	//}
-	////std::cout << "mouse button pressed: " << button << " " << action << " x: " <<  m_mouse_pos_x << " y: " << m_mouse_pos_y << std::endl;
-
+void Render::ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	//m_zoom += yoffset * zoomSpeed;
+	m_camera->translate(glm::vec3(0.0f, 0.0f, yoffset * zoomSpeed));
 }
 
 void Render::KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -217,8 +147,13 @@ void Render::KeyboardCallback(GLFWwindow* window, int key, int scancode, int act
 		break;
 	}
 	
-	std::cout << m_camera->keys.up << std::endl;
+	//std::cout << m_camera->keys.up << std::endl;
 
+}
+
+void Render::WindowSizeCallback(GLFWwindow* window, int width, int height)
+{
+	m_camera->setPerspective(45.0f, float(width) / float(height), 0.1, 1000.0f);
 }
 
 void Render::SetCallbackFunctions()
@@ -227,6 +162,8 @@ void Render::SetCallbackFunctions()
 	glfwSetCursorPosCallback(m_window, GLFWCallbackWrapper::MousePositionCallback);
 	glfwSetKeyCallback(m_window, GLFWCallbackWrapper::KeyboardCallback);
 	glfwSetMouseButtonCallback(m_window, GLFWCallbackWrapper::MouseButtonCallback);
+	glfwSetScrollCallback(m_window, GLFWCallbackWrapper::ScrollCallback);
+	glfwSetWindowSizeCallback(m_window, GLFWCallbackWrapper::WindowSizeCallback);
 }
 
 GLFWwindow * Render::loadGLFWWindow()
@@ -381,47 +318,47 @@ void Render::setVertPositions()
 	m_vertices3D = orthoVerts;
 
 	std::vector<float> cubeOffsets = {
-		0.0f, 0.0f, 0.0f, 
-		1.0f, 0.0f, 0.0f, 
-		1.0f, 1.0f, 0.0f, 
-		1.0f, 1.0f, 0.0f, 
-		0.0f, 1.0f, 0.0f,
-		0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f,
+		1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f,
+		1.0f, 1.0f, 0.0f, 0.0f, 0.0f, -1.0f,
+		1.0f, 1.0f, 0.0f, 0.0f, 0.0f, -1.0f,
+		0.0f, 1.0f, 0.0f, 0.0f, 0.0f, -1.0f,
+		0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f,
 
-		0.0f, 0.0f, 1.0f,
-		1.0f, 0.0f, 1.0f, 
-		1.0f, 1.0f, 1.0f, 
-		1.0f, 1.0f, 1.0f, 
-		0.0f, 1.0f, 1.0f,
-		0.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+		1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+		1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+		1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+		0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
 
-		0.0f, 1.0f, 1.0f,
-		0.0f, 1.0f, 0.0f,
-		0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f,
-		0.0f, 1.0f, 1.0f,
+		0.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f,
 
-		1.0f, 1.0f, 1.0f, 
-		1.0f, 1.0f, 0.0f, 
-		1.0f, 0.0f, 0.0f, 
-		1.0f, 0.0f, 0.0f, 
-		1.0f, 0.0f, 1.0f, 
-		1.0f, 1.0f, 1.0f, 
+		1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+		1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+		1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
 
-		0.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f, 
-		1.0f, 0.0f, 1.0f, 
-		1.0f, 0.0f, 1.0f, 
-		0.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,-1.0f, 0.0f,
+		1.0f, 0.0f, 0.0f, 0.0f,-1.0f, 0.0f,
+		1.0f, 0.0f, 1.0f, 0.0f,-1.0f, 0.0f,
+		1.0f, 0.0f, 1.0f, 0.0f,-1.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,-1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,-1.0f, 0.0f,
 
-		0.0f, 1.0f, 0.0f,
-		1.0f, 1.0f, 0.0f, 
-		1.0f, 1.0f, 1.0f, 
-		1.0f, 1.0f, 1.0f, 
-		0.0f, 1.0f, 1.0f,
-		0.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+		1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+		1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+		1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
 	};
 
 	m_cubePoints = cubeOffsets ;
@@ -537,14 +474,20 @@ void Render::allocateBuffersForOctree()
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Oct);
 	glBufferData(GL_ARRAY_BUFFER, m_cubePoints.size() * sizeof(float), &m_cubePoints[0], GL_STATIC_DRAW);
 
-	glVertexAttribPointer(6, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (GLvoid*)0);
 	glEnableVertexAttribArray(6);
+	glVertexAttribPointer(6, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (GLvoid*)0);
 
 	glEnableVertexAttribArray(7);
+	glVertexAttribPointer(7, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (GLvoid*)(3 * sizeof(float)));
+
+
+
+
+	glEnableVertexAttribArray(8);
 	glBindBuffer(GL_ARRAY_BUFFER, m_bufferOctlist);
-	glVertexAttribIPointer(7, 1, GL_UNSIGNED_INT, 1 * sizeof(uint32_t), (GLvoid*)0);
+	glVertexAttribIPointer(8, 1, GL_UNSIGNED_INT, 1 * sizeof(uint32_t), (GLvoid*)0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glVertexAttribDivisor(7, 1); // IMPORTANT https://learnopengl.com/Advanced-OpenGL/Instancing
+	glVertexAttribDivisor(8, 1); // IMPORTANT https://learnopengl.com/Advanced-OpenGL/Instancing
 
 
 
@@ -600,8 +543,11 @@ void Render::render()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glm::mat4 model = getModel();
-	glm::mat4 view = getView();
-	glm::mat4 projection = getProjection();
+	//glm::mat4 view = getView();
+	//glm::mat4 projection = getProjection();
+
+	glm::mat4 projection = m_camera->matrices.perspective;
+	glm::mat4 view = m_camera->matrices.view;
 
 	//glm::mat4 m_view512 = glm::lookAt(
 	//	glm::vec3(0, 0, -m_zoom),           // Camera is here

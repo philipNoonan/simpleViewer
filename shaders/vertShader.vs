@@ -9,8 +9,9 @@ layout (location = 4) in uint positionMC;
 layout (location = 5) in vec4 normalMC;
 
 layout (location = 6) in vec3 cubePoints;
+layout (location = 7) in vec3 cubeNormals;
 
-layout (location = 7) in uint octlist;
+layout (location = 8) in uint octlist;
 
 uniform mat4 MVP;
 
@@ -22,7 +23,8 @@ uniform mat4 model;
 out vec2 TexCoord;
 out vec3 TexCoord3D;
 
-out vec3 Norm;
+out vec3 Normal;
+out vec3 FragPos;
 
 subroutine vec4 getPosition();
 subroutine uniform getPosition getPositionSelection;
@@ -68,6 +70,8 @@ vec4 fromOctlist()
 	transMat[3] = vec4(origin.xyz / 256.0f - 1.0f, 1.0f);
 
 	TexCoord3D = vec3(-1);
+	Normal = cubeNormals;
+	FragPos = vec3(model * transMat * vec4(cubePoints, 1.0f / (octSideLength / 256.0f)));
 
 	return vec4(MVP * transMat * vec4(cubePoints, 1.0f / (octSideLength / 256.0f)));
 	//  return vec4(projection * view * vec4(origin.xyz, 1.0f)); // can this be reduced to remove the * model, if we just multiply origin by lod

@@ -40,15 +40,30 @@ bool hpDiscriminator()
     float writeValue;
 
 
-    // if (inputValue > isoLevel)
-    if (inputValue == 0.0) // for the voxelization process
+    //if (inputValue == 0.0) // for the voxelization process
+    if (isoLevel == -1.0f)
     {
-        writeValue = 0.0f;
+        if (inputValue == 0.0)
+        {
+            writeValue = 0.0f;
+        }
+        else
+        {
+            writeValue = -1.0f;
+        }
     }
     else
     {
-        writeValue = -1.0f;
+        if (inputValue > isoLevel)
+        {
+            writeValue = -1.0f;
+        }
+        else
+        {
+            writeValue = 0.0f;
+        }
     }
+
 
     imageStore(hpVolumeOutput, readPix, vec4(writeValue));
 

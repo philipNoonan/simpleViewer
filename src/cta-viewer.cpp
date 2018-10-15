@@ -68,6 +68,8 @@ void setVolume()
 	renderer.setPosBuffer(mcubes.getPosBuffer());
 	renderer.allocateBuffersFromMarchingCubes();
 
+	//renderer.setOctlistBuffer(octree.getOctlistBuffer());
+    renderer.allocateBuffersForOctree();
 	octree.setInputFloatVolume(renderer.getVolumeTexture());
 
 	loaderer.~Loader();
@@ -80,18 +82,17 @@ int main()
 	std::vector<float> meshData(1, 0);
 	std::vector<float> boxBot(3, 0);
 	std::vector<float> boxTop(3, 0);
-	loadBinarySTLToVertArray("resources/vesselsBin.stl", meshData);
-	getBoundingBox(meshData, boxTop, boxBot);
 
-	float longestEdge = boxTop[0] - boxBot[0];
-	if (boxTop[1] - boxBot[1] > longestEdge) longestEdge = boxTop[1] - boxBot[1];
-	if (boxTop[2] - boxBot[2] > longestEdge) longestEdge = boxTop[2] - boxBot[2];
+
+
+
 
 
 	// start GLWF context
 	window = renderer.loadGLFWWindow();
 	int display_w, display_h;
 	glfwGetFramebufferSize(window, &display_w, &display_h);
+
 
 	ImGui::CreateContext();
 	ImGui_ImplGlfwGL3_Init(window, true);
@@ -103,23 +104,21 @@ int main()
 	renderer.allocateBuffers();
 
 	// Camera
-	camera.type = Camera::CameraType::firstperson;
-	//.setPerspective(45.0f, float(display_w) / float(display_h), 0.1, 1000.0f);
+	camera.type = Camera::CameraType::lookat;
+	camera.setPerspective(45.0f, float(display_w) / float(display_h), 0.1, 1000.0f);
 
 	renderer.setCamera(&camera);
 
 	voxelizer.init(); // MOVE ME WHEN THE SHADERS WORK
 
-	voxelizer.setVertexArray(meshData);
-	voxelizer.configInfo(1.0f / (512.0f / longestEdge), meshData.size() / 9, boxBot, 512);
-	
-	voxelizer.voxelize(true);
+		
+	//voxelizer.voxelize(true);
 
 
-	octree.init(); // move into the load volume when shaders are stable
+	//octree.init(); // move into the load volume when shaders are stable
 	octree.setInputFloatVolume(voxelizer.getVolumeTexture());
-	renderer.setOctlistBuffer(octree.getOctlistBuffer());
-	renderer.allocateBuffersForOctree();
+	//renderer.setOctlistBuffer(octree.getOctlistBuffer());
+	//renderer.allocateBuffersForOctree();
 
 
 	glEnable(GL_DEPTH_TEST);
@@ -142,7 +141,6 @@ int main()
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwGetFramebufferSize(window, &display_w, &display_h);
-		voxelizer.voxelize(false);
 
 		glfwPollEvents();
 		ImGui_ImplGlfwGL3_NewFrame();
@@ -164,7 +162,7 @@ int main()
 		renderer.setRenderOthroFlag(renderOrtho);
 		renderer.setRenderMarchingCubesFlag(performMarchingCubes);
 		renderer.setRenderRaytraceFlag(performRaytrace);
-		renderer.setRenderOctlistFlag(performOctree);
+		renderer.setRenderOctlistFlag(performOctree || performVoxelization);
 
 		renderer.render();
 
@@ -172,7 +170,7 @@ int main()
 		rcaster.setScreenWidth(display_w);
 		rcaster.setInverseProjection(renderer.getInverseProjection());
 		rcaster.setInverseModel(renderer.getInverseModel());
-		rcaster.setInverseView(renderer.getInverseView());
+		rcaster.setInverseView(glm::inverse(camera.matrices.view));
 		rcaster.setFastRaytraceFlag(performFastRaytrace);
 		rcaster.setThresh(m_isoLevel);
 
@@ -280,6 +278,7 @@ int main()
 		if (ImGui::Button("Octree"))
 		{
 			performOctree ^= 1;
+			octree.setInputFloatVolume(renderer.getVolumeTexture());
 			octree.setIsoLevel(m_isoLevel);
 			octree.setCutoff(m_cutoff);
 
@@ -289,6 +288,37 @@ int main()
 
 		}
 		ImGui::SameLine(); ImGui::Checkbox("", &performOctree);
+
+		if (ImGui::Button("Voxelizer"))
+		{
+			performVoxelization ^= 1;
+
+			if (performVoxelization)
+			{
+				loadBinarySTLToVertArray("resources/brainBin.stl", meshData);
+				getBoundingBox(meshData, boxTop, boxBot);
+				float longestEdge = boxTop[0] - boxBot[0];
+				if (boxTop[1] - boxBot[1] > longestEdge) longestEdge = boxTop[1] - boxBot[1];
+				if (boxTop[2] - boxBot[2] > longestEdge) longestEdge = boxTop[2] - boxBot[2];
+
+				voxelizer.setVertexArray(meshData);
+				voxelizer.configInfo(1.0f / (512.0f / longestEdge), meshData.size() / 9, boxBot, 512);
+
+				voxelizer.voxelize(true);
+
+				octree.setInputFloatVolume(voxelizer.getVolumeTexture());
+				octree.setIsoLevel(-1.0f);
+
+				octree.buildTree();
+				octree.createList();
+				renderer.setOctlistCount(octree.getLength());
+			}
+
+
+		}
+
+
+		ImGui::SameLine(); ImGui::Checkbox("", &performVoxelization);
 
 
 		if (ImGui::Button("Export Mesh"))
@@ -380,7 +410,7 @@ int main()
 
 		camera.update(0.01f);
 
-		std::cout << camera.matrices.view[3][0] << std::endl;
+		//std::cout << camera.matrices.view[3][0] << std::endl;
 
 		glfwSwapBuffers(window);
 

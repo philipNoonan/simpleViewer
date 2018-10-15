@@ -27,7 +27,7 @@ private:
 		glm::mat4 rotM = glm::mat4();
 		glm::mat4 transM;
 
-		rotM = glm::rotate(rotM, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+		rotM = glm::rotate(rotM, glm::radians(rotation.x), glm::vec3(-1.0f, 0.0f, 0.0f));
 		rotM = glm::rotate(rotM, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
 		rotM = glm::rotate(rotM, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
@@ -49,8 +49,8 @@ public:
 	glm::vec3 rotation = glm::vec3();
 	glm::vec3 position = glm::vec3();
 
-	float rotationSpeed = 1.0f;
-	float movementSpeed = 1.0f;
+	float rotationSpeed = 0.1f;
+	float movementSpeed = 0.1f;
 
 	struct
 	{

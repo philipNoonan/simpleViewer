@@ -89,11 +89,11 @@ public:
 	{
 		m_model = glm::mat4(1.0f);
 
-		m_model = glm::rotate(m_model, glm::radians(m_rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-		m_model = glm::rotate(m_model, glm::radians(180.0f + m_rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-		m_model = glm::rotate(m_model, glm::radians(m_rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+		//m_model = glm::rotate(m_model, glm::radians(m_rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+		//m_model = glm::rotate(m_model, glm::radians(180.0f + m_rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+		//m_model = glm::rotate(m_model, glm::radians(m_rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
-		m_rotation = R;
+		//m_rotation = R;
 	}
 	void setCameraPos(glm::vec3 P)
 	{
@@ -144,13 +144,13 @@ public:
 	}
 	glm::mat4 getView()
 	{
-		m_view = glm::lookAt(
-			glm::vec3(0, 0, m_zoom),           // Camera is here
-			glm::vec3(0, 0, 0), // and looks here : at the same position, plus "direction"
-			glm::vec3(0.0f, 1.0f, 0.0f)                  // Head is up (set to 0,-1,0 to look upside-down)
-		);
+		//m_view = glm::lookAt(
+		//	glm::vec3(0, 0, m_zoom),           // Camera is here
+		//	glm::vec3(0, 0, 0), // and looks here : at the same position, plus "direction"
+		//	glm::vec3(0.0f, 1.0f, 0.0f)                  // Head is up (set to 0,-1,0 to look upside-down)
+		//);
 
-		return m_view;
+		return m_camera->matrices.view;
 	}
 	glm::mat4 getModel()
 	{
@@ -159,7 +159,7 @@ public:
 	}
 	glm::mat4 getInverseView()
 	{
-		return inverseMat4(m_view);
+		return inverseMat4(m_camera->matrices.view);
 	}
 	glm::mat4 getInverseModel()
 	{
@@ -167,22 +167,22 @@ public:
 	}
 	glm::mat4 getProjection()
 	{
-		int w, h;
-		glfwGetFramebufferSize(m_window, &w, &h);
-		m_projection = glm::perspective(glm::radians(45.0f), (float)w / (float)h, 0.1f, 1000.0f); // scaling the texture to the current window size seems to work
-		glViewport(0, 0, w, h);
+		//int w, h;
+		//glfwGetFramebufferSize(m_window, &w, &h);
+		//m_projection = glm::perspective(glm::radians(45.0f), (float)w / (float)h, 0.1f, 1000.0f); // scaling the texture to the current window size seems to work
+		//glViewport(0, 0, w, h);
 
-		return m_projection;
+		return m_camera->matrices.perspective;
 	}
 	glm::mat4 getInverseProjection()
 	{
 		// taken from http://bookofhook.com/mousepick.pdf
 		glm::mat4 tempInvMat(0.0f);
-		tempInvMat[0][0] = 1.0f / m_projection[0][0];
-		tempInvMat[1][1] = 1.0f / m_projection[1][1];
-		tempInvMat[2][3] = 1.0f / m_projection[3][2];
-		tempInvMat[3][2] = 1.0f / m_projection[2][3];
-		tempInvMat[3][3] = -m_projection[2][2] / (m_projection[3][2] * m_projection[2][3]);
+		tempInvMat[0][0] = 1.0f / m_camera->matrices.perspective[0][0];
+		tempInvMat[1][1] = 1.0f / m_camera->matrices.perspective[1][1];
+		tempInvMat[2][3] = 1.0f / m_camera->matrices.perspective[3][2];
+		tempInvMat[3][2] = 1.0f / m_camera->matrices.perspective[2][3];
+		tempInvMat[3][3] = -m_camera->matrices.perspective[2][2] / (m_camera->matrices.perspective[3][2] * m_camera->matrices.perspective[2][3]);
 
 		//glm::mat4 temp = glm::inverse(m_projection);
 
@@ -225,6 +225,8 @@ private:
 	void MousePositionCallback(GLFWwindow* window, double positionX, double positionY);
 	void KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 	void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+	void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+	void WindowSizeCallback(GLFWwindow* window, int width, int height);
 
 	class GLFWCallbackWrapper
 	{
@@ -237,6 +239,9 @@ private:
 		static void MousePositionCallback(GLFWwindow* window, double positionX, double positionY);
 		static void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 		static void KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+		static void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+		static void WindowSizeCallback(GLFWwindow* window, int width, int height);
+
 		static void SetApplication(Render *application);
 	private:
 		static Render* s_application;
@@ -244,7 +249,7 @@ private:
 
 	Camera *m_camera;
 
-	float rotationSpeed = 1.0f;
+	float rotationSpeed = 0.1f;
 	float zoomSpeed = 1.0f;
 	glm::vec3 m_rotation = glm::vec3();
 	glm::vec3 m_cameraPos = glm::vec3();
