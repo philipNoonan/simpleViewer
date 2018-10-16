@@ -37,6 +37,7 @@ void setVolume()
 
 	//void * imagePointer = loaderer.getImagePtr();
 	vtkSmartPointer<vtkImageData> imageDataPtr = loaderer.getImagePtr();
+	
 	renderer.uploadImageData(imageDataPtr);
 	int dims[3];
 	imageDataPtr->GetDimensions(dims);
