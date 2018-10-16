@@ -56,11 +56,11 @@ bool hpDiscriminator()
     {
         if (inputValue > isoLevel)
         {
-            writeValue = 0.0f;
+            writeValue = -1.0f;
         }
         else
         {
-            writeValue = -1.0f;
+            writeValue = 0.0f;
         }
     }
 

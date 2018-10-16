@@ -135,7 +135,7 @@ void MCubes::allocateBuffers()
 
 	glGenBuffers(1, &m_bufferNorm);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_bufferNorm);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, 512 * 512 * 512 * sizeof(float), NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, 512 * 512 * 512 * 3 * sizeof(float), NULL, GL_DYNAMIC_DRAW);
 
 	//glGenBuffers(1, &m_bufferPrefixSumByGroup);
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 11, m_bufferPrefixSumByGroup);

@@ -519,8 +519,15 @@ void Render::uploadImageData(vtkSmartPointer<vtkImageData> imData)
 
 	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	 // IF THE IMAGE DATA IS IN SHORT< THEN WE CONVERT ON THE CPU BEFORE TRANSMITTING TO THE GPU
+	 std::vector<uint16_t> tempShortData(dims[0] * dims[1] * dims[2], 0);
+	 memcpy_s(tempShortData.data(), dims[0] * dims[1] * dims[2] * sizeof(uint16_t), imData->GetScalarPointer(), dims[0] * dims[1] * dims[2] * sizeof(uint16_t));
+	std::vector<float> tempFloatData(tempShortData.begin(), tempShortData.end());
+
 	glBindTexture(GL_TEXTURE_3D, m_textureVolume);
-	glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, dims[0], dims[1], dims[2], GL_RED, GL_FLOAT, imData->GetScalarPointer());
+	//glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, dims[0], dims[1], dims[2], GL_RED, GL_FLOAT, imData->GetScalarPointer());
+	glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, dims[0], dims[1], dims[2], GL_RED, GL_FLOAT, tempFloatData.data());
+
 	glGenerateMipmap(GL_TEXTURE_3D);
 	glBindTexture(GL_TEXTURE_3D, 0);
 
