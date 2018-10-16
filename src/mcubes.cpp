@@ -133,9 +133,9 @@ void MCubes::allocateBuffers()
 	//glBufferData(GL_SHADER_STORAGE_BUFFER, memSizeVec4, NULL, GL_STREAM_COPY);
 	glBufferStorage(GL_SHADER_STORAGE_BUFFER, 512 * 512 * 512 * sizeof(uint32_t), NULL, 0);
 
-	//glGenBuffers(1, &m_bufferNorm);
-	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_bufferNorm);
-	//glBufferData(GL_SHADER_STORAGE_BUFFER, memSizeVec4, NULL, GL_DYNAMIC_DRAW);
+	glGenBuffers(1, &m_bufferNorm);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_bufferNorm);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, 512 * 512 * 512 * sizeof(float), NULL, GL_DYNAMIC_DRAW);
 
 	//glGenBuffers(1, &m_bufferPrefixSumByGroup);
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 11, m_bufferPrefixSumByGroup);
@@ -388,7 +388,7 @@ void MCubes::histoPyramids()
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_bufferPos);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_bufferPosEncode);
 
-	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_bufferNorm);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_bufferNorm);
 
 
 	glDispatchCompute(nthreads.x, nthreads.y, nthreads.z);
@@ -407,29 +407,30 @@ void MCubes::histoPyramids()
 
 	//std::cout << "elapsed time : " << hpTime << std::endl;
 
-	//std::vector<float> posData(m_totalSum * 4);
-	//std::vector<uint32_t> posDataOri(m_totalSum );
-	//std::vector<uint32_t> pD(m_totalSum);
+	//std::vector<float> posData(512 * 512 * 512 * sizeof(uint32_t));
+	//std::vector<uint32_t> posDataOri(512 * 512 * 512 * sizeof(uint32_t));
+	//std::vector<uint32_t> pD(512 * 512 * 512 * sizeof(uint32_t));
 
-	//std::vector<uint32_t> posDataOri2(m_totalSum * 4, 1000);
 
-	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_bufferPos);
+
+	//std::vector<float> normData(512*512*512, 1);
+
+	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_bufferNorm);
 	//void *ptr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-	//memcpy_s(posData.data(), posData.size() * sizeof(float), ptr, posData.size() * sizeof(float));
+	//memcpy_s(normData.data(), normData.size() * sizeof(float), ptr, normData.size() * sizeof(float));
 	//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
 	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_bufferPosEncode);
 	//void *ptrEnc = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
-	//memcpy_s(pD.data(), pD.size() * sizeof(float), ptrEnc, pD.size() * sizeof(float));
+	//memcpy_s(pD.data(), pD.size() * sizeof(uint32_t), ptrEnc, pD.size() * sizeof(uint32_t));
 	//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
 	//int j = 0;
-	//for (int i = 0; i < posDataOri.size(); i++, j += 3)
+	//for (int i = 0; i < pD.size(); i++, j += 3)
 	//{
-	//	posDataOri[i] = (uint32_t)posData[j] << 20 | (uint32_t)posData[j + 1] << 10 | (uint32_t)posData[j + 2] << 0;
-	//	posDataOri2[j] = (posDataOri[i] & (1023 << 20)) >> 20;
-	//	posDataOri2[j+1] = (posDataOri[i] & (1023 << 10)) >> 10;
-	//	posDataOri2[j+2] = (posDataOri[i] & (1023 << 0)) >> 0;
+	//	posDataOri[j] = (pD[i] & (1023 << 20)) >> 20;
+	//	posDataOri[j+1] = (pD[i] & (1023 << 10)) >> 10;
+	//	posDataOri[j+2] = (pD[i] & (1023 << 0)) >> 0;
 
 	//}
 

@@ -77,7 +77,7 @@ vec4 fromVertexArray()
     }
     else
     {
-		res = (ambient + diffuse + specular) * vec3(0.95f, 0.12f, 0.05f);
+		res = norm;//(ambient + diffuse + specular) * vec3(0.95f, 0.12f, 0.05f);
     }
 	
 	return vec4(res, 1.0f); 

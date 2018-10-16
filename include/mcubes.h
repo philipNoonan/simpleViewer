@@ -86,6 +86,10 @@ public:
 	{
 		return m_bufferPosEncode;
 	}
+	GLuint getNormBuffer()
+	{
+		return m_bufferNorm;
+	}
 	int getNumberTriangles()
 	{
 		return m_totalSum;

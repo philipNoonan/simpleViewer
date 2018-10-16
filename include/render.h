@@ -112,6 +112,10 @@ public:
 	{
 		m_bufferPos = PB;
 	}
+	void setNormBuffer(GLuint NB)
+	{
+		m_bufferNorm = NB;
+	}
 	void setNumTrianglesMC(int numTri)
 	{
 		m_numTrianglesMC = numTri;
@@ -273,6 +277,8 @@ private:
 	GLuint m_textureRaycast;
 
 	GLuint m_bufferPos;
+	GLuint m_bufferNorm;
+
 	GLuint m_bufferOctlist;
 
 	std::vector<float> m_vertices;

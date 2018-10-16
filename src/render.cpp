@@ -454,10 +454,13 @@ void Render::allocateBuffersFromMarchingCubes()
 
 	// standard verts for marching cubes
 	glBindBuffer(GL_ARRAY_BUFFER, m_bufferPos);
-	//glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
 	glVertexAttribIPointer(4, 1, GL_UNSIGNED_INT, 0, (GLvoid*)0);
-
 	glEnableVertexAttribArray(4);
+
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_bufferNorm);
+	glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
+	glEnableVertexAttribArray(5);
 
 
 
@@ -486,7 +489,7 @@ void Render::allocateBuffersForOctree()
 	glEnableVertexAttribArray(8);
 	glBindBuffer(GL_ARRAY_BUFFER, m_bufferOctlist);
 	glVertexAttribIPointer(8, 1, GL_UNSIGNED_INT, 1 * sizeof(uint32_t), (GLvoid*)0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	//glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glVertexAttribDivisor(8, 1); // IMPORTANT https://learnopengl.com/Advanced-OpenGL/Instancing
 
 
@@ -602,16 +605,20 @@ void Render::render()
 
 	if (m_renderMarchingCubes)
 	{
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glEnableVertexAttribArray(4);
 		glBindBuffer(GL_ARRAY_BUFFER, m_bufferPos);
+		glEnableVertexAttribArray(5);
+		glBindBuffer(GL_ARRAY_BUFFER, m_bufferNorm);
 
-		glBindBuffer(GL_ARRAY_BUFFER, m_bufferOctlist);
+		//glBindBuffer(GL_ARRAY_BUFFER, m_bufferOctlist);
 		glUniformMatrix4fv(m_MvpID, 1, GL_FALSE, glm::value_ptr(MVP));
 		glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_standardTextureMCID);
 		glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &m_fromVertexArrayID);
 		glDrawArrays(GL_TRIANGLES, 0, m_numTrianglesMC);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
 

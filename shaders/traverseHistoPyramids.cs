@@ -39,10 +39,10 @@ layout(std430, binding = 1) buffer posBufEncode
     uint posEncode [];
 };
 
-//layout(std430, binding = 1) buffer normBuf
-//{
-//    vec3 norm [];
-//};
+layout(std430, binding = 2) buffer normBuf
+{
+    vec4 norm [];
+};
 
 // uniforms
 uniform int baseLevel;
@@ -190,17 +190,17 @@ bool traverseHPLevel()
 
         //// Store vertex in VBO
 
-        //vec3 forwardDifference0 = vec3(
-        //        (-texelFetch(volumeFloatTexture, ivec3(point0.x + 1, point0.y, point0.z), 0).x + texelFetch(volumeFloatTexture, ivec3(point0.x - 1, point0.y, point0.z), 0).x),
-        //        (-texelFetch(volumeFloatTexture, ivec3(point0.x, point0.y + 1, point0.z), 0).x + texelFetch(volumeFloatTexture, ivec3(point0.x, point0.y - 1, point0.z), 0).x),
-        //        (-texelFetch(volumeFloatTexture, ivec3(point0.x, point0.y, point0.z + 1), 0).x + texelFetch(volumeFloatTexture, ivec3(point0.x, point0.y, point0.z - 1), 0).x)
-        //    );
+        vec3 forwardDifference0 = vec3(
+                (-texelFetch(volumeFloatTexture, ivec3(point0.x + 1, point0.y, point0.z), 0).x + texelFetch(volumeFloatTexture, ivec3(point0.x - 1, point0.y, point0.z), 0).x),
+                (-texelFetch(volumeFloatTexture, ivec3(point0.x, point0.y + 1, point0.z), 0).x + texelFetch(volumeFloatTexture, ivec3(point0.x, point0.y - 1, point0.z), 0).x),
+                (-texelFetch(volumeFloatTexture, ivec3(point0.x, point0.y, point0.z + 1), 0).x + texelFetch(volumeFloatTexture, ivec3(point0.x, point0.y, point0.z - 1), 0).x)
+            );
 
-        //vec3 forwardDifference1 = vec3(
-        //        (-texelFetch(volumeFloatTexture, ivec3(point1.x + 1, point1.y, point1.z), 0).x + texelFetch(volumeFloatTexture, ivec3(point1.x - 1, point1.y, point1.z), 0).x),
-        //        (-texelFetch(volumeFloatTexture, ivec3(point1.x, point1.y + 1, point1.z), 0).x + texelFetch(volumeFloatTexture, ivec3(point1.x, point1.y - 1, point1.z), 0).x),
-        //        (-texelFetch(volumeFloatTexture, ivec3(point1.x, point1.y, point1.z + 1), 0).x + texelFetch(volumeFloatTexture, ivec3(point1.x, point1.y, point1.z - 1), 0).x)
-        //    );
+        vec3 forwardDifference1 = vec3(
+                (-texelFetch(volumeFloatTexture, ivec3(point1.x + 1, point1.y, point1.z), 0).x + texelFetch(volumeFloatTexture, ivec3(point1.x - 1, point1.y, point1.z), 0).x),
+                (-texelFetch(volumeFloatTexture, ivec3(point1.x, point1.y + 1, point1.z), 0).x + texelFetch(volumeFloatTexture, ivec3(point1.x, point1.y - 1, point1.z), 0).x),
+                (-texelFetch(volumeFloatTexture, ivec3(point1.x, point1.y, point1.z + 1), 0).x + texelFetch(volumeFloatTexture, ivec3(point1.x, point1.y, point1.z - 1), 0).x)
+            );
 
 
         float value0 = texelFetch(volumeFloatTexture, ivec3(point0.x, point0.y, point0.z), 0).x;
@@ -214,15 +214,19 @@ bool traverseHPLevel()
         diff = (isoLevel - value0) / (testVal1 - value0);
  
         const vec3 vertex = mix(vec3(point0.x, point0.y, point0.z), vec3(point1.x, point1.y, point1.z), diff); // * scaing of voxels
-        //const vec3 normal = mix(forwardDifference0, forwardDifference1, diff);
+        const vec3 normal = normalize(mix(forwardDifference0, forwardDifference1, diff));
 
 
 
         posEncode[target * 3 + vertexNr] = uint(vertex.x) << 20 | uint(vertex.y) << 10 | uint(vertex.z);
-        
-        // output normals here if we want to calc it here rather than in vertshader stage
 
-        ++vertexNr;
+        // output normals here if we want to calc it here rather than in vertshader stage
+        // norm[target * 3 + vertexNr * 3] = target;
+        // norm[target * 3 + vertexNr * 3 + 1] = cubeIndex;
+        // norm[target * 3 + vertexNr * 3 + 2] = vertexNr;
+        norm[target * 3 + vertexNr] = vec4(normal, 0.0f);
+
+         ++vertexNr;
     }
 
 

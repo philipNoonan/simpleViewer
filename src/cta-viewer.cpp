@@ -66,6 +66,7 @@ void setVolume()
 	rcaster.setOctreeTexture(octree.getOctreeTexture());
 
 	renderer.setPosBuffer(mcubes.getPosBuffer());
+	renderer.setNormBuffer(mcubes.getNormBuffer());
 	renderer.allocateBuffersFromMarchingCubes();
 
 	//renderer.setOctlistBuffer(octree.getOctlistBuffer());
@@ -295,7 +296,7 @@ int main()
 
 			if (performVoxelization)
 			{
-				loadBinarySTLToVertArray("resources/brainBin.stl", meshData);
+				loadBinarySTLToVertArray("resources/vesselsBin.stl", meshData);
 				getBoundingBox(meshData, boxTop, boxBot);
 				float longestEdge = boxTop[0] - boxBot[0];
 				if (boxTop[1] - boxBot[1] > longestEdge) longestEdge = boxTop[1] - boxBot[1];
