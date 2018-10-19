@@ -234,7 +234,10 @@ void Render::setLocations()
 	m_sliceID = glGetUniformLocation(renderProg.getHandle(), "slice");
 	m_sliceValsID = glGetUniformLocation(renderProg.getHandle(), "sliceVals");
 	m_levelID = glGetUniformLocation(renderProg.getHandle(), "level");
-	
+	m_lightPosID = glGetUniformLocation(renderProg.getHandle(), "lightPos");
+
+
+
 	m_positionSelectionRoutineID = glGetSubroutineUniformLocation(renderProg.getHandle(), GL_VERTEX_SHADER, "getPositionSelection");
 	m_standardTextureID = glGetSubroutineIndex(renderProg.getHandle(), GL_VERTEX_SHADER, "fromStandardTexture");
 	m_standardTexture3DID = glGetSubroutineIndex(renderProg.getHandle(), GL_VERTEX_SHADER, "fromStandardTexture3D");
@@ -609,6 +612,18 @@ void Render::render()
 
 	glBindVertexArray(m_VAO);
 
+	camAngle += 1.0f;
+
+	if (camAngle >= 360.0f)
+	{
+		camAngle = 0.0f;
+	}
+
+	
+	m_lightPos.x = 10000.0f * cos(camAngle * 0.0174533f);
+	m_lightPos.z = 10000.0f * sin(camAngle * 0.0174533f);
+
+	glUniform3fv(m_lightPosID, 1, glm::value_ptr(m_lightPos));
 
 	if (m_renderOrtho)
 	{
@@ -649,7 +664,7 @@ void Render::render()
 	if (m_renderOctree)
 	{
 		//glBeginQuery(GL_TIME_ELAPSED, query[0]);
-
+		glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 		glEnableVertexAttribArray(6);
 		glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Oct);
 
@@ -668,9 +683,19 @@ void Render::render()
 		glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_octlistID);
 		glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &m_fromVertexArrayID);
 
-		glDrawArraysInstanced(GL_TRIANGLES, 0, 36, m_octlistCount);
+		if (m_renderVoxels)
+		{
+			glDrawArraysInstanced(GL_TRIANGLES, 0, 36, m_octlistCount);
+		}
+		else
+		{
+			glDrawArraysInstanced(GL_POINTS, 0, 1, m_octlistCount);
+		}
+		
+
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+		glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
 		//glEndQuery(GL_TIME_ELAPSED);
 		//GLuint available = 0;
@@ -682,7 +707,7 @@ void Render::render()
 		//glGetQueryObjectui64vEXT(query[0], GL_QUERY_RESULT, &elapsed);
 		//auto hpTime = elapsed / 1000000.0;
 
-		//std::cout << "elapsed time : " << hpTime << std::endl;
+		//std::cout << "render time : " << hpTime << std::endl;
 
 	}
 	

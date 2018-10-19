@@ -21,8 +21,8 @@ uniform int level = 0;
 uniform float slice;
 uniform vec3 sliceVals;
 
-uniform vec3 lightPos = vec3(10.0f, 0.0f, 100.0f);
-uniform vec3 lightColor = vec3(1.0f);
+uniform vec3 lightPos;
+vec3 lightColor = vec3(1.0f);
 
 
 uniform struct Light {
@@ -71,13 +71,15 @@ vec4 fromVertexArray()
 	vec3 res = vec3(1.0f);
 
 	//vec4 tData = 0.0001f * textureLod(currentTexture3D, vec3(TexCoord3D.x, TexCoord3D.y, TexCoord3D.z), float(level) );
-    if (TexCoord3D.x < 0)
+    if (TexCoord3D.z < 0)
     {
-		res = (ambient + diffuse + specular) * vec3(0.12f, 0.92f, 0.05f);
+		//	res = vec3(TexCoord3D.x * 0.002);// * (ambient + diffuse + specular);// * (ambient + diffuse + specular);
+
+		res = vec3(1);// * (ambient + diffuse + specular);
     }
     else
     {
-		res = norm;//(ambient + diffuse + specular) * vec3(0.95f, 0.12f, 0.05f);
+		res = norm * (ambient + diffuse + specular);// * vec3(0.95f, 0.12f, 0.05f);
     }
 	
 	return vec4(res, 1.0f); 

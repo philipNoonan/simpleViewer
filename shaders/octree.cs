@@ -40,8 +40,7 @@ bool hpDiscriminator()
     float writeValue;
 
 
-    //if (inputValue == 0.0) // for the voxelization process
-    if (isoLevel == -1.0f)
+    if (isoLevel == -1.0f) // volume is from voxelization
     {
         if (inputValue == 0.0)
         {
@@ -52,7 +51,7 @@ bool hpDiscriminator()
             writeValue = -1.0f;
         }
     }
-    else
+    else // volume is standard float images
     {
         if (inputValue > isoLevel)
         {

@@ -62,6 +62,7 @@ bool performRaytrace = false; bool performFastRaytrace = false;
 bool performMarchingCubes = false;
 bool performOctree = false;
 bool performVoxelization = false;
+bool renderVoxels = true;
 
 std::vector<std::filesystem::path> imageFiles;
 string imageVolumeFileName;

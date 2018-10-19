@@ -216,6 +216,10 @@ public:
 	{
 		m_octlistCount = cnt;
 	}
+	void setRenderVoxels(bool renVox)
+	{
+		m_renderVoxels = renVox;
+	}
 
 private:
 
@@ -295,6 +299,7 @@ private:
 	GLuint m_sliceID;
 	GLuint m_sliceValsID;
 	GLuint m_levelID;
+	GLuint m_lightPosID;
 
 	GLuint m_positionSelectionRoutineID;
 	GLuint m_standardTextureID;
@@ -320,6 +325,9 @@ private:
 	glm::mat4 m_model_color = glm::mat4(1.0);
 	glm::mat4 m_model = glm::mat4(1.0f);
 
+	glm::vec3 m_lightPos = glm::vec3(0.0, 0.0, 10);
+	float camAngle = 0.0f;
+
 	float m_slice = 0.0f;
 	int m_level = 0;
 	int m_numTrianglesMC = 0;
@@ -329,6 +337,7 @@ private:
 	bool m_renderMarchingCubes = false;
 	bool m_renderRaytrace = false; bool m_renderFastRaytrace = true;
 	bool m_renderOctree = false;
+	bool m_renderVoxels = true;
 
 };
 

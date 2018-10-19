@@ -294,7 +294,6 @@ int main()
 		if (ImGui::Button("Voxelizer"))
 		{
 			performVoxelization ^= 1;
-
 			if (performVoxelization)
 			{
 				loadBinarySTLToVertArray("resources/vesselsBin.stl", meshData);
@@ -318,9 +317,19 @@ int main()
 
 
 		}
-
-
 		ImGui::SameLine(); ImGui::Checkbox("", &performVoxelization);
+
+
+		if (ImGui::Button("Voxels"))
+		{
+			renderVoxels = !renderVoxels;
+
+			renderer.setRenderVoxels(renderVoxels);
+
+		}
+		ImGui::SameLine(); ImGui::Checkbox("", &renderVoxels);
+
+
 
 
 		if (ImGui::Button("Export Mesh"))

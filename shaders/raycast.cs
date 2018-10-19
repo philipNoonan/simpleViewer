@@ -210,7 +210,7 @@ void raytraceOctTree()
         float samp = texelFetch(octTreeTexture, ivec3(texPos.xyz * (512 >> lod)), lod).x; // i think this is fine, since we want to go to the corner of the voxel, i.e. the clipping from vec to ivec should do this for us
 
 
-        if (samp == 0.0f)
+        if (samp == -1.0f)
         {
             float sampTex = texture(volumeDataTexture, vec3(texPos.xyz)).x; // i think this is fine, since we want to go to the corner of the voxel, i.e. the clipping from vec to ivec should do this for us
 
@@ -239,7 +239,7 @@ void raytraceOctTree()
             //return;
 
         }
-        else if (samp == -1.0f)
+        else if (samp == 0.0f)
         {
             if (back)
             {
