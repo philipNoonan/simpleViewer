@@ -1,6 +1,10 @@
 #version 430 core
 const float PI = 3.1415926535897932384626433832795f;
 
+float max3 (vec3 v) {
+  return max (max (v.x, v.y), v.z);
+}
+
 layout (binding=0) uniform sampler2D currentTexture2D; 
 layout (binding=1) uniform sampler3D currentTexture3D; 
 
@@ -11,9 +15,17 @@ in vec3 TexCoord3D;
 in vec3 Normal;
 in vec3 FragPos;
 
+in vec3 boxCenter;
+in vec3 boxRadius;
+
+
+uniform mat4 invView; 
+uniform mat4 invProj;
+uniform mat4 invModel;
+
+uniform mat4 projection;
 uniform mat4 view;
-
-
+uniform mat4 model;
 
 layout(location = 0) out vec4 color;
 
@@ -31,6 +43,97 @@ uniform struct Light {
 	float attenuation;
 	float ambientCoefficient;
 } light;
+
+struct Ray {
+    vec3 origin;
+    vec3 direction;
+} ray;
+
+
+// vec3 box.radius:       independent half-length along the X, Y, and Z axes
+// mat3 box.rotation:     box-to-world rotation (orthonormal 3x3 matrix) transformation
+// bool rayCanStartInBox: if true, assume the origin is never in a box. GLSL optimizes this at compile time
+// bool oriented:         if false, ignore box.rotation
+bool ourIntersectBoxCommon(vec3 boxCenter, vec3 boxRadius, vec3 boxInvRadius, mat3 boxRotation, vec3 rayOrigin, vec3 rayDirection, in vec3 _invRayDirection, out float distance, out vec3 normal, const bool rayCanStartInBox, const in bool oriented) {
+
+    // Move to the box's reference frame. This is unavoidable and un-optimizable.
+    rayOrigin = boxRotation * (rayOrigin - boxCenter);
+    if (oriented) {
+        rayDirection = rayDirection * boxRotation;
+    }
+    
+    // This "rayCanStartInBox" branch is evaluated at compile time because `const` in GLSL
+    // means compile-time constant. The multiplication by 1.0 will likewise be compiled out
+    // when rayCanStartInBox = false.
+    float winding;
+    if (rayCanStartInBox) {
+        // Winding direction: -1 if the ray starts inside of the box (i.e., and is leaving), +1 if it is starting outside of the box
+        winding = (max3(abs(rayOrigin) * boxInvRadius) < 1.0) ? -1.0 : 1.0;
+    } else {
+        winding = 1.0;
+    }
+
+    // We'll use the negated sign of the ray direction in several places, so precompute it.
+    // The sign() instruction is fast...but surprisingly not so fast that storing the result
+    // temporarily isn't an advantage.
+    vec3 sgn = -sign(rayDirection);
+
+	// Ray-plane intersection. For each pair of planes, choose the one that is front-facing
+    // to the ray and compute the distance to it.
+    vec3 distanceToPlane = boxRadius * winding * sgn - rayOrigin;
+    if (oriented) {
+        distanceToPlane /= rayDirection;
+    } else {
+        distanceToPlane *= _invRayDirection;
+    }
+
+    // Perform all three ray-box tests and cast to 0 or 1 on each axis. 
+    // Use a macro to eliminate the redundant code (no efficiency boost from doing so, of course!)
+    // Could be written with 
+#   define TEST(U, VW)\
+         /* Is there a hit on this axis in front of the origin? Use multiplication instead of && for a small speedup */\
+         (distanceToPlane.U >= 0.0) && \
+         /* Is that hit within the face of the box? */\
+         all(lessThan(abs(rayOrigin.VW + rayDirection.VW * distanceToPlane.U), boxRadius.VW))
+
+    bvec3 test = bvec3(TEST(x, yz), TEST(y, zx), TEST(z, xy));
+
+    // CMOV chain that guarantees exactly one element of sgn is preserved and that the value has the right sign
+    sgn = test.x ? vec3(sgn.x, 0.0, 0.0) : (test.y ? vec3(0.0, sgn.y, 0.0) : vec3(0.0, 0.0, test.z ? sgn.z : 0.0));    
+#   undef TEST
+        
+    // At most one element of sgn is non-zero now. That element carries the negative sign of the 
+    // ray direction as well. Notice that we were able to drop storage of the test vector from registers,
+    // because it will never be used again.
+
+    // Mask the distance by the non-zero axis
+    // Dot product is faster than this CMOV chain, but doesn't work when distanceToPlane contains nans or infs. 
+    //
+    distance = (sgn.x != 0.0) ? distanceToPlane.x : ((sgn.y != 0.0) ? distanceToPlane.y : distanceToPlane.z);
+
+    // Normal must face back along the ray. If you need
+    // to know whether we're entering or leaving the box, 
+    // then just look at the value of winding. If you need
+    // texture coordinates, then use box.invDirection * hitPoint.
+    
+    if (oriented) {
+        normal = boxRotation * sgn;
+    } else {
+        normal = sgn;
+    }
+    
+    return (sgn.x != 0) || (sgn.y != 0) || (sgn.z != 0);
+}
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -74,8 +177,45 @@ vec4 fromVertexArray()
     if (TexCoord3D.z < 0)
     {
 		//	res = vec3(TexCoord3D.x * 0.002);// * (ambient + diffuse + specular);// * (ambient + diffuse + specular);
+		// THIS ONE WORKS		res = vec3(boxCenter.z * 0.001);// * (ambient + diffuse + specular);
 
-		res = vec3(1);// * (ambient + diffuse + specular);
+		    // NDS coords
+    float u = (2.0 * float(gl_FragCoord.x)) / 1024.0f - 1.0f; //1024.0f is the window resolution, change this to a uniform
+    float v = (2.0 * float(gl_FragCoord.y)) / 1024.0f - 1.0f;
+
+	vec4 origin;
+    vec4 direction;
+
+    origin = (inverse(model) * inverse(view))[3];
+
+    vec4 ray_eye = inverse(projection) * vec4(u, v, -1.0, 1.0f);
+
+    ray_eye = vec4(ray_eye.xy, -1.0f, 0.0f);
+
+    direction = normalize(inverse(model) * inverse(view) * ray_eye);
+
+
+		vec3 boxRotaion = vec3(0.0f);
+		// to get ray origin we need to get gl_FragCoord
+		vec3 rayOrigin = vec3(ray_eye.xyz);
+		// to get ray direction we need invModel and invView * rayOrigin
+		vec3 rayDirection = vec3(direction.xyz);
+
+		float distanceToHit = 0.0f;
+		vec3 normalAtHit = vec3(0.0f);
+
+		vec3 invRayDirection = 1.0f / rayDirection;
+		vec3 invBoxRadius = 1.0f / boxRadius;
+
+		const bool rayCanStartInBox = false;
+		const bool oriented = true; 
+		mat3 boxRotation = mat3(1.0f);
+
+
+		bool res0 = ourIntersectBoxCommon(boxCenter, boxRadius, invBoxRadius, boxRotation, rayOrigin, rayDirection, invRayDirection, distanceToHit, normalAtHit, rayCanStartInBox, oriented);
+
+		res = vec3(distanceToHit * 0.0001f);// * (ambient + diffuse + specular);
+
     }
     else
     {

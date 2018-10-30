@@ -229,6 +229,8 @@ void Render::setLocations()
 	m_ProjectionID = glGetUniformLocation(renderProg.getHandle(), "projection");
 	m_ModelID = glGetUniformLocation(renderProg.getHandle(), "model");
 
+
+
 	m_MvpID = glGetUniformLocation(renderProg.getHandle(), "MVP");
 	m_imSizeID = glGetUniformLocation(renderProg.getHandle(), "imSize");
 	m_sliceID = glGetUniformLocation(renderProg.getHandle(), "slice");

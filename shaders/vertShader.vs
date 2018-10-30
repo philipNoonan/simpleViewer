@@ -26,6 +26,10 @@ out vec3 TexCoord3D;
 out vec3 Normal;
 out vec3 FragPos;
 
+out vec3 boxCenter;
+out vec3 boxRadius;
+
+
 subroutine vec4 getPosition();
 subroutine uniform getPosition getPositionSelection;
 
@@ -111,7 +115,8 @@ vec4 fromOctlist()
 	float pointy;
 	vec4 posy = vec4(0,0,0,1);
 
-	quadricProj(transMat[3].xyz, octSideLength / 256.0f, MVP, vec2(512.0f), posy, pointy);
+	// THIS BIT SHOULD BE + HALF A OCTLENGTH< MAYBE
+	quadricProj(transMat[3].xyz, (octSideLength / 256.0f), MVP, vec2(512.0f), posy, pointy);
 
 	 // Square area
 	float stochasticCoverage = pointy * pointy;
@@ -123,17 +128,12 @@ vec4 fromOctlist()
 	}
 
 	gl_PointSize = pointy;
-	//if (posy.y > 0)
-	//{
-		return vec4(posy);
+
+	boxRadius = vec3(pointy);
+	boxCenter = vec3(origin);
+	return vec4(posy);
 
 
-	//}
-	//else
-	//{
-	//	return vec4(posy);
-
-	//}
 
 
 	//  return vec4(projection * view * vec4(origin.xyz, 1.0f)); // can this be reduced to remove the * model, if we just multiply origin by lod
