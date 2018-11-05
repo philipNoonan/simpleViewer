@@ -176,10 +176,10 @@ GLFWwindow * Render::loadGLFWWindow()
 	//glfwWindowHint(GLFW_REFRESH_RATE, 30);
 	glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glAlphaFunc(GL_GREATER, 0.1);
-	glEnable(GL_ALPHA_TEST);
+	//glEnable(GL_BLEND);
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//glAlphaFunc(GL_GREATER, 0.1);
+	//glEnable(GL_ALPHA_TEST);
 
 	m_window = glfwCreateWindow(1024, 1024, "simpleViewer CTA Demo", nullptr, nullptr);
 
@@ -573,6 +573,7 @@ void Render::render()
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
 
 	glm::mat4 model = getModel();
 	//glm::mat4 view = getView();

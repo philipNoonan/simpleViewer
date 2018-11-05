@@ -321,7 +321,7 @@ private:
 
 	glm::mat4 m_cameraMatrix = glm::mat4(1.0f);
 	glm::mat4 m_view = glm::mat4(1.0f);
-	glm::mat4 m_projection = glm::perspective(glm::radians(45.0f), 1.0f, 0.001f, 10000.0f); // some default matrix
+	glm::mat4 m_projection = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 1000.0f); // some default matrix
 	glm::mat4 m_model_color = glm::mat4(1.0);
 	glm::mat4 m_model = glm::mat4(1.0f);
 

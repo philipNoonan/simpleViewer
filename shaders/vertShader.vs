@@ -106,7 +106,7 @@ vec4 fromOctlist()
 	mat4 transMat = mat4(1.0f);
 
 	//shift into NDS
-	transMat[3] = vec4(origin.xyz / 256.0f, 1.0f);
+	transMat[3] = vec4((origin.xyz / 256.0f)-1.0, 1.0f);
 	TexCoord3D = vec3(origin.z, 0, -1);
 	Normal = cubeNormals;
 	FragPos = origin;//vec3(model * transMat * vec4(cubePoints, 1.0f / (octSideLength / 256.0f)));

@@ -177,10 +177,10 @@ vec4 fromVertexArray()
     if (TexCoord3D.z < 0)
     {
 
-	if (boxRadius.x > 10240.0f)
-	{
-		discard;
-	}
+	//if (boxRadius.x > 1024.0f)
+	//{
+	//	discard;
+	//}
 		//	res = vec3(TexCoord3D.x * 0.002);// * (ambient + diffuse + specular);// * (ambient + diffuse + specular);
 		// THIS ONE WORKS
 		//res = vec4(vec3(boxCenter.z * 0.1),1.0f);// * (ambient + diffuse + specular);
@@ -203,7 +203,7 @@ vec4 fromVertexArray()
 
 		//vec3 boxRotaion = vec3(0.0f);
 		// to get ray origin we need to get gl_FragCoord
-		vec3 rayOrigin = vec3(origin.xyz*256.0);
+		vec3 rayOrigin = vec3((origin.xyz + 1.0 ) * 256.0);
 		// to get ray direction we need invModel and invView * rayOrigin
 		vec3 rayDirection = vec3(direction.xyz);
 
@@ -221,8 +221,8 @@ vec4 fromVertexArray()
 		bool res0 = ourIntersectBoxCommon(boxCenter, boxRadius, invBoxRadius, boxRotation, rayOrigin, rayDirection, invRayDirection, distanceToHit, normalAtHit, rayCanStartInBox, oriented);
 		if (res0)
 		{
-			res = vec4(vec3(normalAtHit) *(ambient + diffuse + specular), 1.0f);
-			//	res = vec4(vec3(distanceToHit * 0.0001f),1.0f);// * (ambient + diffuse + specular),1.0f);
+			//res = vec4(vec3(normalAtHit) *(ambient + diffuse + specular), 1.0f);
+				res = vec4(vec3(distanceToHit * 0.001f),1.0f);// * (ambient + diffuse + specular),1.0f);
 
 		}
 		else{
