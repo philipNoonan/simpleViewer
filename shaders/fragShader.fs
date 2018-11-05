@@ -213,16 +213,16 @@ vec4 fromVertexArray()
 		vec3 invRayDirection = 1.0f / rayDirection;
 		vec3 invBoxRadius = 1.0f / boxRadius;
 
-		const bool rayCanStartInBox = true;
+		const bool rayCanStartInBox = false;
 		const bool oriented = true; 
-		mat3 boxRotation = mat3(1.0);
+		mat3 boxRotation = mat3(model);
 
 
 		bool res0 = ourIntersectBoxCommon(boxCenter, boxRadius, invBoxRadius, boxRotation, rayOrigin, rayDirection, invRayDirection, distanceToHit, normalAtHit, rayCanStartInBox, oriented);
 		if (res0)
 		{
-			//res = vec4(vec3(normalAtHit) *(ambient + diffuse + specular), 1.0f);
-				res = vec4(vec3(distanceToHit * 0.001f),1.0f);// * (ambient + diffuse + specular),1.0f);
+			res = vec4(vec3(normalAtHit) *(ambient + diffuse + specular), 1.0f);
+			//	res = vec4(vec3(distanceToHit * 0.001f),1.0f);// * (ambient + diffuse + specular),1.0f);
 
 		}
 		else{

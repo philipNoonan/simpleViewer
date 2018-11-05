@@ -106,7 +106,7 @@ vec4 fromOctlist()
 	mat4 transMat = mat4(1.0f);
 
 	//shift into NDS
-	transMat[3] = vec4((origin.xyz / 256.0f)-1.0, 1.0f);
+	transMat[3] = vec4((origin.xyz / 256.0f) -1.0, 1.0f);
 	TexCoord3D = vec3(origin.z, 0, -1);
 	Normal = cubeNormals;
 	FragPos = origin;//vec3(model * transMat * vec4(cubePoints, 1.0f / (octSideLength / 256.0f)));
@@ -115,10 +115,10 @@ vec4 fromOctlist()
 	//return vec4(MVP * transMat * vec4(cubePoints, 1.0f / (octSideLength / 256.0f)));
 
 	float pointy;
-	vec4 posy = vec4(0,0,0, 1);
+	vec4 posy = vec4(transMat[3].xyz + octSideLength/512.0,1);
 
 	// THIS BIT SHOULD BE + HALF A OCTLENGTH< MAYBE
-	quadricProj(transMat[3].xyz, octSideLength/256.0, MVP, vec2(512.0f), posy, pointy); // window size is 1024, so half window size is 512
+	quadricProj(transMat[3].xyz + octSideLength/512.0, octSideLength/256.0, MVP, vec2(512.0f), posy, pointy); // window size is 1024, so half window size is 512
 
 	 // Square area
 	float stochasticCoverage = pointy * pointy;
@@ -126,7 +126,7 @@ vec4 fromOctlist()
 		((gl_VertexID & 0xffff) > stochasticCoverage * (0xffff / 0.8))) {
 		// "Cull" small voxels in a stable, stochastic way by moving past the z = 0 plane.
 		// Assumes voxels are in randomized order.
-		//posy = vec4(-1, -1, -1, -1);
+		posy = vec4(-1, -1, -1, -1);
 	}
 
 	gl_PointSize = pointy;
