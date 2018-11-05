@@ -572,6 +572,7 @@ void Render::render()
 {
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
 
 	glm::mat4 model = getModel();
 	//glm::mat4 view = getView();
@@ -614,16 +615,16 @@ void Render::render()
 
 	glBindVertexArray(m_VAO);
 
-	camAngle += 1.0f;
+	//camAngle += 1.0f;
 
-	if (camAngle >= 360.0f)
-	{
-		camAngle = 0.0f;
-	}
+	//if (camAngle >= 360.0f)
+	//{
+	//	camAngle = 0.0f;
+	//}
 
-	
-	m_lightPos.x = 10000.0f * cos(camAngle * 0.0174533f);
-	m_lightPos.z = 10000.0f * sin(camAngle * 0.0174533f);
+	//
+	//m_lightPos.x = 10000.0f * cos(camAngle * 0.0174533f);
+	//m_lightPos.z = 10000.0f * sin(camAngle * 0.0174533f);
 
 	glUniform3fv(m_lightPosID, 1, glm::value_ptr(m_lightPos));
 

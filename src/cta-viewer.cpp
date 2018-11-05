@@ -107,7 +107,7 @@ int main()
 
 	// Camera
 	camera.type = Camera::CameraType::lookat;
-	camera.setPerspective(45.0f, float(display_w) / float(display_h), 0.1, 1000.0f);
+	camera.setPerspective(45.0f, float(display_w) / float(display_h), 0.01, 10000.0f);
 
 	renderer.setCamera(&camera);
 

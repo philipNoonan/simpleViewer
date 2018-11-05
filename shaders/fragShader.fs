@@ -171,13 +171,19 @@ vec4 fromVertexArray()
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
 	vec3 specular = specularStrength * spec * lightColor;
 
-	vec3 res = vec3(1.0f);
+	vec4 res = vec4(0.0f);
 
 	//vec4 tData = 0.0001f * textureLod(currentTexture3D, vec3(TexCoord3D.x, TexCoord3D.y, TexCoord3D.z), float(level) );
     if (TexCoord3D.z < 0)
     {
+
+	if (boxRadius.x > 10240.0f)
+	{
+		discard;
+	}
 		//	res = vec3(TexCoord3D.x * 0.002);// * (ambient + diffuse + specular);// * (ambient + diffuse + specular);
-		// THIS ONE WORKS		res = vec3(boxCenter.z * 0.001);// * (ambient + diffuse + specular);
+		// THIS ONE WORKS
+		//res = vec4(vec3(boxCenter.z * 0.1),1.0f);// * (ambient + diffuse + specular);
 
 		    // NDS coords
     float u = (2.0 * float(gl_FragCoord.x)) / 1024.0f - 1.0f; //1024.0f is the window resolution, change this to a uniform
@@ -186,18 +192,18 @@ vec4 fromVertexArray()
 	vec4 origin;
     vec4 direction;
 
-    origin = (inverse(model) * inverse(view))[3];
+    origin = inverse((model * view))[3];
 
     vec4 ray_eye = inverse(projection) * vec4(u, v, -1.0, 1.0f);
 
     ray_eye = vec4(ray_eye.xy, -1.0f, 0.0f);
 
-    direction = normalize(inverse(model) * inverse(view) * ray_eye);
+    direction = normalize(inverse(model * view) * ray_eye);
 
 
-		vec3 boxRotaion = vec3(0.0f);
+		//vec3 boxRotaion = vec3(0.0f);
 		// to get ray origin we need to get gl_FragCoord
-		vec3 rayOrigin = vec3(ray_eye.xyz);
+		vec3 rayOrigin = vec3(origin.xyz*256.0);
 		// to get ray direction we need invModel and invView * rayOrigin
 		vec3 rayDirection = vec3(direction.xyz);
 
@@ -207,22 +213,30 @@ vec4 fromVertexArray()
 		vec3 invRayDirection = 1.0f / rayDirection;
 		vec3 invBoxRadius = 1.0f / boxRadius;
 
-		const bool rayCanStartInBox = false;
+		const bool rayCanStartInBox = true;
 		const bool oriented = true; 
-		mat3 boxRotation = mat3(1.0f);
+		mat3 boxRotation = mat3(1.0);
 
 
 		bool res0 = ourIntersectBoxCommon(boxCenter, boxRadius, invBoxRadius, boxRotation, rayOrigin, rayDirection, invRayDirection, distanceToHit, normalAtHit, rayCanStartInBox, oriented);
+		if (res0)
+		{
+			res = vec4(vec3(normalAtHit) *(ambient + diffuse + specular), 1.0f);
+			//	res = vec4(vec3(distanceToHit * 0.0001f),1.0f);// * (ambient + diffuse + specular),1.0f);
 
-		res = vec3(distanceToHit * 0.0001f);// * (ambient + diffuse + specular);
+		}
+		else{
+						//res = vec4(1,1,0, 0.5f);// * (ambient + diffuse + specular);
+			discard;
+		}
 
     }
     else
     {
-		res = norm * (ambient + diffuse + specular);// * vec3(0.95f, 0.12f, 0.05f);
+		res = vec4(norm * (ambient + diffuse + specular), 1.0);// * vec3(0.95f, 0.12f, 0.05f);
     }
 	
-	return vec4(res, 1.0f); 
+	return vec4(res); 
 
 }
 
