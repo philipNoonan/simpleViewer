@@ -294,6 +294,11 @@ private:
 	GLuint m_ViewID;
 	GLuint m_ProjectionID;
 	GLuint m_ModelID;
+
+	GLuint m_invViewID;
+	GLuint m_invProjectionID;
+	GLuint m_invModelID;
+
 	GLuint m_MvpID;
 	GLuint m_imSizeID;
 	GLuint m_sliceID;

@@ -127,17 +127,6 @@ bool ourIntersectBoxCommon(vec3 boxCenter, vec3 boxRadius, vec3 boxInvRadius, ma
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 subroutine vec4 getColor();
 subroutine uniform getColor getColorSelection;
 
@@ -192,15 +181,17 @@ vec4 fromVertexArray()
 	vec4 origin;
     vec4 direction;
 
-    origin = inverse((model * view))[3];
+    origin = (invModel * invView)[3];
 
-    vec4 ray_eye = inverse(projection) * vec4(u, v, -1.0, 1.0f);
-
+    vec4 ray_eye = invProj * vec4(u, v, -1.0, 1.0f);
+	// issue here, i dont think the direction of the ray is correct
     ray_eye = vec4(ray_eye.xy, -1.0f, 0.0f);
 
-    direction = normalize(inverse(model * view) * ray_eye);
+    direction = normalize(invModel * invView * ray_eye);
 
-
+	float notused0 = model[0][0];
+	float notused1 = view[0][0];
+	float notused2 = projection[0][0];
 		//vec3 boxRotaion = vec3(0.0f);
 		// to get ray origin we need to get gl_FragCoord
 		vec3 rayOrigin = vec3((origin.xyz + 1.0 ) * 256.0);
@@ -214,27 +205,27 @@ vec4 fromVertexArray()
 		vec3 invBoxRadius = 1.0f / boxRadius;
 
 		const bool rayCanStartInBox = false;
-		const bool oriented = true; 
-		mat3 boxRotation = mat3(model);
+		const bool oriented = false; 
+		mat3 boxRotation = mat3(1.0);
 
 
 		bool res0 = ourIntersectBoxCommon(boxCenter, boxRadius, invBoxRadius, boxRotation, rayOrigin, rayDirection, invRayDirection, distanceToHit, normalAtHit, rayCanStartInBox, oriented);
 		if (res0)
 		{
-			res = vec4(vec3(normalAtHit) *(ambient + diffuse + specular), 1.0f);
-			//	res = vec4(vec3(distanceToHit * 0.001f),1.0f);// * (ambient + diffuse + specular),1.0f);
+			//res = vec4(vec3(normalAtHit) *(ambient + diffuse + specular), 1.0f);
+		      res = vec4(vec3(boxCenter * 0.002f + notused0 * 0.0001f + notused1 * 0.0001f + notused2 * 0.00001f),1.0f);// * (ambient + diffuse + specular),1.0f);
 
 		}
 		else{
-						//res = vec4(1,1,0, 0.5f);// * (ambient + diffuse + specular);
+						//res = vec4(vec3(1,1,0), 1.0f);// * (ambient + diffuse + specular);
 			discard;
 		}
 
     }
     else
     {
-		res = vec4(norm * (ambient + diffuse + specular), 1.0);// * vec3(0.95f, 0.12f, 0.05f);
-    }
+		res = vec4(vec3(boxCenter * 0.001f), 1.0f);// * (ambient + diffuse + specular),1.0f);
+	}
 	
 	return vec4(res); 
 

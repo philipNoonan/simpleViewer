@@ -229,7 +229,9 @@ void Render::setLocations()
 	m_ProjectionID = glGetUniformLocation(renderProg.getHandle(), "projection");
 	m_ModelID = glGetUniformLocation(renderProg.getHandle(), "model");
 
-
+	m_invViewID = glGetUniformLocation(renderProg.getHandle(), "invView");
+	m_invProjectionID = glGetUniformLocation(renderProg.getHandle(), "invProj");
+	m_invModelID = glGetUniformLocation(renderProg.getHandle(), "invModel");
 
 	m_MvpID = glGetUniformLocation(renderProg.getHandle(), "MVP");
 	m_imSizeID = glGetUniformLocation(renderProg.getHandle(), "imSize");
@@ -572,8 +574,7 @@ void Render::render()
 {
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
+	//glDepthFunc(GL_LESS);
 
 	glm::mat4 model = getModel();
 	//glm::mat4 view = getView();
@@ -667,7 +668,7 @@ void Render::render()
 
 	if (m_renderOctree)
 	{
-		//glBeginQuery(GL_TIME_ELAPSED, query[0]);
+		glBeginQuery(GL_TIME_ELAPSED, query[0]);
 		glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 		glEnableVertexAttribArray(6);
 		glBindBuffer(GL_ARRAY_BUFFER, m_VBO_Oct);
@@ -681,6 +682,11 @@ void Render::render()
 		glUniformMatrix4fv(m_ProjectionID, 1, GL_FALSE, glm::value_ptr(projection));
 		glUniformMatrix4fv(m_ViewID, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(m_ModelID, 1, GL_FALSE, glm::value_ptr(model));
+
+		glUniformMatrix4fv(m_invProjectionID, 1, GL_FALSE, glm::value_ptr(glm::inverse(projection)));
+		glUniformMatrix4fv(m_invViewID, 1, GL_FALSE, glm::value_ptr(glm::inverse(view)));
+		glUniformMatrix4fv(m_invModelID, 1, GL_FALSE, glm::value_ptr(glm::inverse(model)));
+
 		glUniformMatrix4fv(m_MvpID, 1, GL_FALSE, glm::value_ptr(MVP));
 
 
@@ -701,17 +707,17 @@ void Render::render()
 
 		glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
-		//glEndQuery(GL_TIME_ELAPSED);
-		//GLuint available = 0;
-		//while (!available) {
-		//	glGetQueryObjectuiv(query[0], GL_QUERY_RESULT_AVAILABLE, &available);
-		//}
-		//// elapsed time in nanoseconds
-		//GLuint64 elapsed;
-		//glGetQueryObjectui64vEXT(query[0], GL_QUERY_RESULT, &elapsed);
-		//auto hpTime = elapsed / 1000000.0;
+		glEndQuery(GL_TIME_ELAPSED);
+		GLuint available = 0;
+		while (!available) {
+			glGetQueryObjectuiv(query[0], GL_QUERY_RESULT_AVAILABLE, &available);
+		}
+		// elapsed time in nanoseconds
+		GLuint64 elapsed;
+		glGetQueryObjectui64vEXT(query[0], GL_QUERY_RESULT, &elapsed);
+		auto hpTime = elapsed / 1000000.0;
 
-		//std::cout << "render time : " << hpTime << std::endl;
+		std::cout << "render time : " << hpTime << std::endl;
 
 	}
 	
