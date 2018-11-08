@@ -234,6 +234,8 @@ void Render::setLocations()
 	m_invModelID = glGetUniformLocation(renderProg.getHandle(), "invModel");
 
 	m_MvpID = glGetUniformLocation(renderProg.getHandle(), "MVP");
+	m_RotMatID = glGetUniformLocation(renderProg.getHandle(), "rotMat");
+
 	m_imSizeID = glGetUniformLocation(renderProg.getHandle(), "imSize");
 	m_sliceID = glGetUniformLocation(renderProg.getHandle(), "slice");
 	m_sliceValsID = glGetUniformLocation(renderProg.getHandle(), "sliceVals");
@@ -617,16 +619,18 @@ void Render::render()
 
 	glBindVertexArray(m_VAO);
 
-	//camAngle += 1.0f;
+	camAngle += 0.1f;
 
-	//if (camAngle >= 360.0f)
-	//{
-	//	camAngle = 0.0f;
-	//}
+	if (camAngle >= 10.0f)
+	{
+		camAngle = 0.0f;
+	}
 
-	//
-	//m_lightPos.x = 10000.0f * cos(camAngle * 0.0174533f);
-	//m_lightPos.z = 10000.0f * sin(camAngle * 0.0174533f);
+	
+	m_lightPos.x = 10000.0f * cos(camAngle * 0.0174533f);
+	m_lightPos.z = 10000.0f * sin(camAngle * 0.0174533f);
+
+	glm::mat4 rotMat = glm::rotate(glm::mat4(1.0f), glm::radians(camAngle), glm::vec3(0, 0, 1));
 
 	glUniform3fv(m_lightPosID, 1, glm::value_ptr(m_lightPos));
 
@@ -639,6 +643,8 @@ void Render::render()
 		glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_standardTexture3DID);
 		glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &m_fromVolumeID);
 		glUniformMatrix4fv(m_MvpID, 1, GL_FALSE, glm::value_ptr(MVP));
+		glUniformMatrix4fv(m_RotMatID, 1, GL_FALSE, glm::value_ptr(rotMat));
+
 		glUniform1i(m_levelID, m_level);
 
 		glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, 0);
@@ -688,6 +694,7 @@ void Render::render()
 		glUniformMatrix4fv(m_invModelID, 1, GL_FALSE, glm::value_ptr(glm::inverse(model)));
 
 		glUniformMatrix4fv(m_MvpID, 1, GL_FALSE, glm::value_ptr(MVP));
+		//glUniformMatrix4fv(m_RotMatID, 1, GL_FALSE, glm::value_ptr(rotMat));
 
 
 		glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_octlistID);
@@ -700,6 +707,8 @@ void Render::render()
 		else
 		{
 			glDrawArraysInstanced(GL_POINTS, 0, 1, m_octlistCount);
+			//glDrawArrays(GL_POINTS, 0, 2);
+
 		}
 		
 

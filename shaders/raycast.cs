@@ -215,7 +215,7 @@ void raytraceOctTree()
             float sampTex = texture(volumeDataTexture, vec3(texPos.xyz)).x; // i think this is fine, since we want to go to the corner of the voxel, i.e. the clipping from vec to ivec should do this for us
 
             // this assumes local homogeneity
-            volumecolor += vec4(texPos.z, texPos.z, texPos.z, 1.0);
+            volumecolor += vec4(0.01);
             //volumecolor += vec4(0.010 * float(lod));
 
             //tnear = tfar; // move to back face of voxel, and therefore front face of next voxel
@@ -340,8 +340,8 @@ void raycast()
         //volumeColor = mix(volumeColor, vec4(samp), 0.5f);
         if (samp > thresh)
         {
-            //volumeColor += vec4(samp * 0.001f); // PROBLEM??
-            volumeColor = vec4(texPos.z, texPos.z, texPos.z, 1.0);
+            volumeColor += vec4(samp * 0.000001f); // PROBLEM??
+                                                   //volumeColor += vec4(0.001);
         }
         if (volumeColor.w >= 1.0f) break; // PROBLEM??
 

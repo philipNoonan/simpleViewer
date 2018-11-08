@@ -14,7 +14,7 @@ layout (location = 7) in vec3 cubeNormals;
 layout (location = 8) in uint octlist;
 
 uniform mat4 MVP;
-
+uniform mat4 rotMat;
 
 uniform mat4 projection;
 uniform mat4 view;
@@ -100,7 +100,18 @@ vec4 fromOctlist()
 
 	float octSideLength = float(pow(2, lod));
 	//vec3 origin = vec3(100,0,0); // 
-	vec3 origin = vec3(xPos, yPos, zPos) * octSideLength; // 
+	vec3 origin = (vec3(xPos, yPos, zPos) * octSideLength) + (octSideLength * 0.5f); // 
+
+	//if (gl_VertexID == 0)
+	//{
+	//	origin = vec3(256+32,256+32,256+32);
+	//		octSideLength = 64.0f;
+	//}
+	//else if(gl_VertexID == 1)
+	//{
+	//	origin = vec3(0+128,0+128,0+128);
+	//		octSideLength = 256.0f;
+	//}
 
 
 	mat4 transMat = mat4(1.0f);
@@ -114,10 +125,10 @@ vec4 fromOctlist()
 	//gl_PointSize = octSideLength *2;
 
 	float pointy;
-	vec4 posy = vec4(transMat[3].xyz, 1); // the original point of the cube should be its position in world sapce, not OSPosition as in the OG code snip
+	vec4 posy = vec4(transMat[3].xyz, 1.0); // the original point of the cube should be its position in world sapce, not OSPosition as in the OG code snip
 
 	// THIS BIT SHOULD BE + HALF A OCTLENGTH< MAYBE??
-	quadricProj(transMat[3].xyz, octSideLength / 256.0, MVP, vec2(512.0f), posy, pointy); // window size is 1024, so half window size is 512, and since we scaled from 0 - 511 to -1 to 1 (i.e. double then divide by width) we divide the length by 2/512
+	quadricProj(transMat[3].xyz, octSideLength / 512.0, MVP, vec2(512.0f), posy, pointy); // window size is 1024, so half window size is 512, and since we scaled from 0 - 511 to -1 to 1 (i.e. double then divide by width) we divide the length by 2/512
 
 	 // Square area
 	float stochasticCoverage = pointy * pointy;
@@ -131,14 +142,14 @@ vec4 fromOctlist()
 
 	gl_PointSize = pointy;
 
-	boxRadius = vec3(octSideLength);
+	boxRadius = vec3(octSideLength / 2.0f);
 	boxCenter = vec3(origin.xyz); // 
-	return vec4(MVP * transMat * vec4(cubePoints, 1.0f / (octSideLength / 256.0f)));
+	return vec4(MVP * transMat * vec4(0,0,0, 1.0f / (octSideLength / 256.0f)));
 
-	if (origin.z < 200)
-	{
+	//if (origin.z < 200)
+	//{
 	//	posy = vec4(-1, -1, -1, -1);
-	}
+	//}
 
 	return vec4(posy); 
 

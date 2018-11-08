@@ -300,6 +300,7 @@ private:
 	GLuint m_invModelID;
 
 	GLuint m_MvpID;
+	GLuint m_RotMatID;
 	GLuint m_imSizeID;
 	GLuint m_sliceID;
 	GLuint m_sliceValsID;

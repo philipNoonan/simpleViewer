@@ -1,6 +1,8 @@
 #version 430 core
 const float PI = 3.1415926535897932384626433832795f;
 
+layout (depth_any) out float gl_FragDepth;
+
 float max3 (vec3 v) {
   return max (max (v.x, v.y), v.z);
 }
@@ -17,6 +19,8 @@ in vec3 FragPos;
 
 in vec3 boxCenter;
 in vec3 boxRadius;
+
+uniform mat4 rotMat;
 
 
 uniform mat4 invView; 
@@ -99,7 +103,7 @@ bool ourIntersectBoxCommon(vec3 boxCenter, vec3 boxRadius, vec3 boxInvRadius, ma
     bvec3 test = bvec3(TEST(x, yz), TEST(y, zx), TEST(z, xy));
 
     // CMOV chain that guarantees exactly one element of sgn is preserved and that the value has the right sign
-    sgn = test.x ? vec3(sgn.x, 0.0, 0.0) : (test.y ? vec3(0.0, sgn.y, 0.0) : vec3(0.0, 0.0, test.z ? sgn.z : 0.0));    
+    sgn = test.x ? vec3(sgn.x, 0.0, 0.0) : (test.y ? vec3(0.0, sgn.y, 0.0) : vec3(0.0, 0.0, test.z ? -sgn.z : 0.0));    
 #   undef TEST
         
     // At most one element of sgn is non-zero now. That element carries the negative sign of the 
@@ -137,6 +141,8 @@ vec4 fromVolume()
 	//vec4 tData = imageLoad(volumeData, vec3(TexCoord.x * 512.0f, TexCoord.y * 512.0f, slice));
 	float outfloat = tData.x > 10 ? tData.x * 0.0005f : 0;
 	//float alpha = outfloat > 0.1 ? 1 : 0;
+
+	gl_FragDepth = gl_FragCoord.z;
 	return vec4(outfloat.xxx, 1.0);
 
 	//return vec4(1.0, 0.0, 0.0, 1.0);
@@ -161,6 +167,7 @@ vec4 fromVertexArray()
 	vec3 specular = specularStrength * spec * lightColor;
 
 	vec4 res = vec4(0.0f);
+		//	gl_FragDepth = 0.12;
 
 	//vec4 tData = 0.0001f * textureLod(currentTexture3D, vec3(TexCoord3D.x, TexCoord3D.y, TexCoord3D.z), float(level) );
     if (TexCoord3D.z < 0)
@@ -181,17 +188,16 @@ vec4 fromVertexArray()
 	vec4 origin;
     vec4 direction;
 
-    origin = (invModel * invView)[3];
+
+    origin = (invView)[3];
 
     vec4 ray_eye = invProj * vec4(u, v, -1.0, 1.0f);
 	// issue here, i dont think the direction of the ray is correct
     ray_eye = vec4(ray_eye.xy, -1.0f, 0.0f);
 
-    direction = normalize(invModel * invView * ray_eye);
+    direction = normalize(invView * ray_eye);
 
-	float notused0 = model[0][0];
-	float notused1 = view[0][0];
-	float notused2 = projection[0][0];
+	
 		//vec3 boxRotaion = vec3(0.0f);
 		// to get ray origin we need to get gl_FragCoord
 		vec3 rayOrigin = vec3((origin.xyz + 1.0 ) * 256.0);
@@ -205,27 +211,44 @@ vec4 fromVertexArray()
 		vec3 invBoxRadius = 1.0f / boxRadius;
 
 		const bool rayCanStartInBox = false;
-		const bool oriented = false; 
-		mat3 boxRotation = mat3(1.0);
+		const bool oriented = true; 
+		mat3 boxRotation = mat3(1.0f);
+				
+				mat4 boxShift = mat4(1.0f);
+		boxShift[3].xyz = boxCenter;
 
+		//mat3 boxRotation = mat3((inverse(boxShift * rotMat * (boxShift)));
 
 		bool res0 = ourIntersectBoxCommon(boxCenter, boxRadius, invBoxRadius, boxRotation, rayOrigin, rayDirection, invRayDirection, distanceToHit, normalAtHit, rayCanStartInBox, oriented);
 		if (res0)
 		{
-			//res = vec4(vec3(normalAtHit) *(ambient + diffuse + specular), 1.0f);
-		      res = vec4(vec3(boxCenter * 0.002f + notused0 * 0.0001f + notused1 * 0.0001f + notused2 * 0.00001f),1.0f);// * (ambient + diffuse + specular),1.0f);
-
+			res = vec4(vec3(normalAtHit), 1.0f);
+		    //  res = vec4(vec3(boxCenter * 0.002f),1.0f);// * (ambient + diffuse + specular),1.0f);
+					gl_FragDepth = vec3(distanceToHit + rayOrigin).z * 0.0001f;
+					//res = vec4(vec3(distanceToHit + rayOrigin).zzz/1024.0, 1.0f);
 		}
 		else{
-						//res = vec4(vec3(1,1,0), 1.0f);// * (ambient + diffuse + specular);
+			//res = vec4(vec3(1,1,0), 1.0f);// * (ambient + diffuse + specular);
 			discard;
 		}
 
+
+
     }
-    else
+    else if (TexCoord3D.z == -2.0f)
     {
+		gl_FragDepth = gl_FragCoord.z;
+
 		res = vec4(vec3(boxCenter * 0.001f), 1.0f);// * (ambient + diffuse + specular),1.0f);
 	}
+	else if (TexCoord3D.z >= 0.0f) // marching cubes
+	{
+		gl_FragDepth = gl_FragCoord.z;
+
+		res = vec4(norm * (ambient + diffuse),1.0f);
+
+	}
+
 	
 	return vec4(res); 
 
