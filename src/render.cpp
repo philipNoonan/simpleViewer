@@ -619,9 +619,9 @@ void Render::render()
 
 	glBindVertexArray(m_VAO);
 
-	camAngle += 0.1f;
+	camAngle += 0.5f;
 
-	if (camAngle >= 10.0f)
+	if (camAngle >= 360.0f)
 	{
 		camAngle = 0.0f;
 	}
@@ -694,7 +694,7 @@ void Render::render()
 		glUniformMatrix4fv(m_invModelID, 1, GL_FALSE, glm::value_ptr(glm::inverse(model)));
 
 		glUniformMatrix4fv(m_MvpID, 1, GL_FALSE, glm::value_ptr(MVP));
-		//glUniformMatrix4fv(m_RotMatID, 1, GL_FALSE, glm::value_ptr(rotMat));
+		glUniformMatrix4fv(m_RotMatID, 1, GL_FALSE, glm::value_ptr(rotMat));
 
 
 		glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_octlistID);

@@ -104,13 +104,13 @@ vec4 fromOctlist()
 
 	//if (gl_VertexID == 0)
 	//{
-	//	origin = vec3(256+32,256+32,256+32);
+	//	origin = vec3(256,256,256);
 	//		octSideLength = 64.0f;
 	//}
 	//else if(gl_VertexID == 1)
 	//{
 	//	origin = vec3(0+128,0+128,0+128);
-	//		octSideLength = 256.0f;
+	//		octSideLength = 128.0f;
 	//}
 
 

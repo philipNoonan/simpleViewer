@@ -61,7 +61,7 @@ struct Ray {
 bool ourIntersectBoxCommon(vec3 boxCenter, vec3 boxRadius, vec3 boxInvRadius, mat3 boxRotation, vec3 rayOrigin, vec3 rayDirection, in vec3 _invRayDirection, out float distance, out vec3 normal, const bool rayCanStartInBox, const in bool oriented) {
 
     // Move to the box's reference frame. This is unavoidable and un-optimizable.
-    rayOrigin = boxRotation * (rayOrigin - boxCenter);
+    rayOrigin = (rayOrigin - boxCenter) * boxRotation;
     if (oriented) {
         rayDirection = rayDirection * boxRotation;
     }
@@ -197,8 +197,6 @@ vec4 fromVertexArray()
 
     direction = normalize(invView * ray_eye);
 
-	
-		//vec3 boxRotaion = vec3(0.0f);
 		// to get ray origin we need to get gl_FragCoord
 		vec3 rayOrigin = vec3((origin.xyz + 1.0 ) * 256.0);
 		// to get ray direction we need invModel and invView * rayOrigin
@@ -212,19 +210,23 @@ vec4 fromVertexArray()
 
 		const bool rayCanStartInBox = false;
 		const bool oriented = true; 
-		mat3 boxRotation = mat3(1.0f);
-				
-				mat4 boxShift = mat4(1.0f);
-		boxShift[3].xyz = boxCenter;
+		mat4 br = mat4(1.0);
 
-		//mat3 boxRotation = mat3((inverse(boxShift * rotMat * (boxShift)));
+		br[0].xyz = vec3(0.9961947, 0.0871557, 0.0);
+		br[1].xyz = vec3(-0.0871557, 0.9961947, 0.0);
+				
+		mat4 boxShift = mat4(invView);
+
+		boxShift[3].xyz = -boxCenter;
+
+		mat3 boxRotation = mat3(rotMat);
 
 		bool res0 = ourIntersectBoxCommon(boxCenter, boxRadius, invBoxRadius, boxRotation, rayOrigin, rayDirection, invRayDirection, distanceToHit, normalAtHit, rayCanStartInBox, oriented);
 		if (res0)
 		{
 			res = vec4(vec3(normalAtHit), 1.0f);
 		    //  res = vec4(vec3(boxCenter * 0.002f),1.0f);// * (ambient + diffuse + specular),1.0f);
-					gl_FragDepth = vec3(distanceToHit + rayOrigin).z * 0.0001f;
+					gl_FragDepth = vec3(distanceToHit + rayOrigin).z * 0.001f;
 					//res = vec4(vec3(distanceToHit + rayOrigin).zzz/1024.0, 1.0f);
 		}
 		else{
