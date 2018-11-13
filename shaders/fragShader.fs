@@ -21,7 +21,7 @@ in vec3 boxCenter;
 in vec3 boxRadius;
 
 uniform mat4 rotMat;
-
+uniform mat4 MVP;
 
 uniform mat4 invView; 
 uniform mat4 invProj;
@@ -226,8 +226,32 @@ vec4 fromVertexArray()
 		{
 			res = vec4(vec3(normalAtHit), 1.0f);
 		    //  res = vec4(vec3(boxCenter * 0.002f),1.0f);// * (ambient + diffuse + specular),1.0f);
-					gl_FragDepth = vec3(distanceToHit + rayOrigin).z * 0.001f;
-					//res = vec4(vec3(distanceToHit + rayOrigin).zzz/1024.0, 1.0f);
+			vec4 worldspace = vec4( (distanceToHit * vec4(rayDirection, 0.0) + vec4(rayOrigin, 1.0))) / 256.0 - 1.0f;
+			worldspace.w = 1.0f;
+			vec4 fakeFrag = vec4((MVP) * worldspace);
+			//inverse(invProj * invView)
+			float fakeDepth = ((gl_DepthRange.far - gl_DepthRange.near) / 2.0) * (fakeFrag.z / fakeFrag.w) + ((gl_DepthRange.far + gl_DepthRange.near) / 2.0);
+
+
+			gl_FragDepth = fakeDepth ;
+			// this should be related to the depth to hit value, not the depth to the 2D sprite
+
+			
+			float T1 = projection[2][2];
+			float T2 = projection[3][2];
+			float E1 = projection[2][3];
+
+
+			float Cw = T2 / (distanceToHit - (T1 / E1));
+			
+
+			//gl_FragDepth = vec3(distanceToHit).z * Cw;
+
+			//gl_FragDepth = gl_FragCoord.z;
+
+
+					res = vec4(fakeFrag.xyz, 1.0f);
+			//res = vec4(gl_FragDepth.xxx, 1.0);
 		}
 		else{
 			//res = vec4(vec3(1,1,0), 1.0f);// * (ambient + diffuse + specular);
