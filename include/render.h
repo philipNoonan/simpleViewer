@@ -311,11 +311,16 @@ private:
 	GLuint m_standardTextureID;
 	GLuint m_standardTexture3DID;
 	GLuint m_standardTextureMCID;
-	GLuint m_octlistID;
+	GLuint m_octlistPointsID;
+	GLuint m_octlistTrianglesID;
 
 	GLuint m_colorSelectionRoutineID;
 	GLuint m_fromVolumeID;
-	GLuint m_fromVertexArrayID;
+
+	GLuint m_fromMarchingCubesTrianglesID;
+	GLuint m_fromOctreePointsID;
+	GLuint m_fromOctreeTrianglesID;
+
 	GLuint m_fromTexture2DID;
 
 

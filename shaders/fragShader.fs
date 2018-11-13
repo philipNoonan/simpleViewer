@@ -1,7 +1,7 @@
 #version 430 core
 const float PI = 3.1415926535897932384626433832795f;
 
-layout (depth_any) out float gl_FragDepth;
+layout (depth_less) out float gl_FragDepth;
 
 float max3 (vec3 v) {
   return max (max (v.x, v.y), v.z);
@@ -149,7 +149,7 @@ vec4 fromVolume()
 }
 
 subroutine(getColor)
-vec4 fromVertexArray()
+vec4 fromOctreePoints()
 {
 // ambient
 	float ambientStrength = 0.1f;
@@ -250,7 +250,7 @@ vec4 fromVertexArray()
 			//gl_FragDepth = gl_FragCoord.z;
 
 
-					res = vec4(fakeFrag.xyz, 1.0f);
+					res = vec4(smoothstep(-1.0, 1.0, worldspace.xyz), 1.0f);
 			//res = vec4(gl_FragDepth.xxx, 1.0);
 		}
 		else{
@@ -261,23 +261,68 @@ vec4 fromVertexArray()
 
 
     }
-    else if (TexCoord3D.z == -2.0f)
-    {
-		gl_FragDepth = gl_FragCoord.z;
 
-		res = vec4(vec3(boxCenter * 0.001f), 1.0f);// * (ambient + diffuse + specular),1.0f);
-	}
-	else if (TexCoord3D.z >= 0.0f) // marching cubes
-	{
-		gl_FragDepth = gl_FragCoord.z;
-
-		res = vec4(norm * (ambient + diffuse),1.0f);
-
-	}
 
 	
 	return vec4(res); 
 
+}
+
+subroutine(getColor)
+vec4 fromOctreeTriangles()
+{
+// ambient
+	float ambientStrength = 0.1f;
+	vec3 ambient = ambientStrength * vec3(1.0f);
+// diffuse
+	vec3 norm = normalize(Normal);
+	vec3 lightDir = normalize(lightPos - FragPos);
+	float diff = max(dot(norm, lightDir), 0.0);
+	vec3 diffuse = diff * lightColor;
+//specular
+	float specularStrength = 0.5;
+	vec3 viewDir = normalize(view[3].xyz - FragPos);
+	vec3 reflectDir = reflect(-lightDir, norm);
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+	vec3 specular = specularStrength * spec * lightColor;
+
+	vec4 res = vec4(0.0f);
+		//	gl_FragDepth = 0.12;
+
+
+		gl_FragDepth = gl_FragCoord.z;
+
+		res = vec4(smoothstep(-1.0,1.0,TexCoord3D), 1.0f);// * (ambient + diffuse + specular),1.0f);
+	
+
+
+	
+	return vec4(res); 
+
+}
+
+subroutine(getColor)
+vec4 fromMarchingCubesTriangles()
+{
+// ambient
+	float ambientStrength = 0.1f;
+	vec3 ambient = ambientStrength * vec3(1.0f);
+// diffuse
+	vec3 norm = normalize(Normal);
+	vec3 lightDir = normalize(lightPos - FragPos);
+	float diff = max(dot(norm, lightDir), 0.0);
+	vec3 diffuse = diff * lightColor;
+//specular
+	float specularStrength = 0.5;
+	vec3 viewDir = normalize(view[3].xyz - FragPos);
+	vec3 reflectDir = reflect(-lightDir, norm);
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+	vec3 specular = specularStrength * spec * lightColor;
+
+		gl_FragDepth = gl_FragCoord.z;
+
+		return vec4(norm * (ambient + diffuse),1.0f);
+		
 }
 
 subroutine(getColor)

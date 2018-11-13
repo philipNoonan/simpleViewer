@@ -248,7 +248,8 @@ void Render::setLocations()
 	m_standardTextureID = glGetSubroutineIndex(renderProg.getHandle(), GL_VERTEX_SHADER, "fromStandardTexture");
 	m_standardTexture3DID = glGetSubroutineIndex(renderProg.getHandle(), GL_VERTEX_SHADER, "fromStandardTexture3D");
 	m_standardTextureMCID = glGetSubroutineIndex(renderProg.getHandle(), GL_VERTEX_SHADER, "fromStandardTextureMC");
-	m_octlistID = glGetSubroutineIndex(renderProg.getHandle(), GL_VERTEX_SHADER, "fromOctlist");
+	m_octlistPointsID = glGetSubroutineIndex(renderProg.getHandle(), GL_VERTEX_SHADER, "fromOctlistPoints");
+	m_octlistTrianglesID = glGetSubroutineIndex(renderProg.getHandle(), GL_VERTEX_SHADER, "fromOctlistTriangles");
 
 
 
@@ -256,7 +257,9 @@ void Render::setLocations()
 	m_fromVolumeID = glGetSubroutineIndex(renderProg.getHandle(), GL_FRAGMENT_SHADER, "fromVolume");
 	m_fromTexture2DID = glGetSubroutineIndex(renderProg.getHandle(), GL_FRAGMENT_SHADER, "fromTexture2D");
 
-	m_fromVertexArrayID = glGetSubroutineIndex(renderProg.getHandle(), GL_FRAGMENT_SHADER, "fromVertexArray");
+	m_fromMarchingCubesTrianglesID = glGetSubroutineIndex(renderProg.getHandle(), GL_FRAGMENT_SHADER, "fromMarchingCubesTriangles");
+	m_fromOctreePointsID = glGetSubroutineIndex(renderProg.getHandle(), GL_FRAGMENT_SHADER, "fromOctreePoints");
+	m_fromOctreeTrianglesID = glGetSubroutineIndex(renderProg.getHandle(), GL_FRAGMENT_SHADER, "fromOctreeTriangles");
 }
 
 
@@ -665,7 +668,7 @@ void Render::render()
 		//glBindBuffer(GL_ARRAY_BUFFER, m_bufferOctlist);
 		glUniformMatrix4fv(m_MvpID, 1, GL_FALSE, glm::value_ptr(MVP));
 		glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_standardTextureMCID);
-		glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &m_fromVertexArrayID);
+		glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &m_fromMarchingCubesTrianglesID);
 		glDrawArrays(GL_TRIANGLES, 0, m_numTrianglesMC);
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
@@ -697,15 +700,19 @@ void Render::render()
 		glUniformMatrix4fv(m_RotMatID, 1, GL_FALSE, glm::value_ptr(rotMat));
 
 
-		glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_octlistID);
-		glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &m_fromVertexArrayID);
 
 		if (m_renderVoxels)
 		{
+			glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_octlistTrianglesID);
+			glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &m_fromOctreeTrianglesID);
+
 			glDrawArraysInstanced(GL_TRIANGLES, 0, 36, m_octlistCount);
 		}
 		else
 		{
+			glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_octlistPointsID);
+			glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &m_fromOctreePointsID);
+
 			glDrawArraysInstanced(GL_POINTS, 0, 1, m_octlistCount);
 			//glDrawArrays(GL_POINTS, 0, 2);
 

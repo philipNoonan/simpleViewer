@@ -90,7 +90,7 @@ void quadricProj(in vec3 osPosition, in float voxelSize, in mat4 objectToScreenM
 }
 
 subroutine(getPosition)
-vec4 fromOctlist()
+vec4 fromOctlistPoints()
 {
 
 	uint xPos = (octlist & 4286578688) >> 23;
@@ -154,6 +154,33 @@ vec4 fromOctlist()
 
 	//  return vec4(projection * view * vec4(origin.xyz, 1.0f)); // can this be reduced to remove the * model, if we just multiply origin by lod
 	//	return vec4(projection * view * model * vec4(origin.xyz, 1.0f)); // can this be reduced to remove the * model, if we just multiply origin by lod
+
+}
+
+subroutine(getPosition)
+vec4 fromOctlistTriangles()
+{
+
+	uint xPos = (octlist & 4286578688) >> 23;
+	uint yPos = (octlist & 8372224) >> 14;
+	uint zPos = (octlist & 16352) >> 5;
+	uint lod = (octlist & 31);
+
+	float octSideLength = float(pow(2, lod));
+
+	vec3 origin = (vec3(xPos, yPos, zPos) * octSideLength); // 
+
+	
+	mat4 transMat = mat4(1.0f);
+
+	//shift from octre volume space into world space where evrything is mapped into a volume that goes from -1 to 1
+	transMat[3] = vec4((origin.xyz / 256.0f) - 1.0, 1.0f);
+	TexCoord3D = transMat[3].xyz;
+
+		FragPos = vec3(model * transMat * vec4(cubePoints, 1.0f / (octSideLength / 256.0f)));
+
+	return vec4(MVP * transMat * vec4(cubePoints, 1.0f / (octSideLength / 256.0f)));
+
 
 }
 
