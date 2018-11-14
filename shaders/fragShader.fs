@@ -61,7 +61,7 @@ struct Ray {
 bool ourIntersectBoxCommon(vec3 boxCenter, vec3 boxRadius, vec3 boxInvRadius, mat3 boxRotation, vec3 rayOrigin, vec3 rayDirection, in vec3 _invRayDirection, out float distance, out vec3 normal, const bool rayCanStartInBox, const in bool oriented) {
 
     // Move to the box's reference frame. This is unavoidable and un-optimizable.
-    rayOrigin = (rayOrigin - boxCenter) * boxRotation;
+    rayOrigin = boxRotation * (rayOrigin - boxCenter);
     if (oriented) {
         rayDirection = rayDirection * boxRotation;
     }
@@ -151,37 +151,9 @@ vec4 fromVolume()
 subroutine(getColor)
 vec4 fromOctreePoints()
 {
-// ambient
-	float ambientStrength = 0.1f;
-	vec3 ambient = ambientStrength * vec3(1.0f);
-// diffuse
-	vec3 norm = normalize(Normal);
-	vec3 lightDir = normalize(lightPos - FragPos);
-	float diff = max(dot(norm, lightDir), 0.0);
-	vec3 diffuse = diff * lightColor;
-//specular
-	float specularStrength = 0.5;
-	vec3 viewDir = normalize(view[3].xyz - FragPos);
-	vec3 reflectDir = reflect(-lightDir, norm);
-	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-	vec3 specular = specularStrength * spec * lightColor;
 
 	vec4 res = vec4(0.0f);
-		//	gl_FragDepth = 0.12;
 
-	//vec4 tData = 0.0001f * textureLod(currentTexture3D, vec3(TexCoord3D.x, TexCoord3D.y, TexCoord3D.z), float(level) );
-    if (TexCoord3D.z < 0)
-    {
-
-	//if (boxRadius.x > 1024.0f)
-	//{
-	//	discard;
-	//}
-		//	res = vec3(TexCoord3D.x * 0.002);// * (ambient + diffuse + specular);// * (ambient + diffuse + specular);
-		// THIS ONE WORKS
-		//res = vec4(vec3(boxCenter.z * 0.1),1.0f);// * (ambient + diffuse + specular);
-
-		    // NDS coords
     float u = (2.0 * float(gl_FragCoord.x)) / 1024.0f - 1.0f; //1024.0f is the window resolution, change this to a uniform
     float v = (2.0 * float(gl_FragCoord.y)) / 1024.0f - 1.0f;
 
@@ -219,7 +191,7 @@ vec4 fromOctreePoints()
 
 		boxShift[3].xyz = -boxCenter;
 
-		mat3 boxRotation = mat3(rotMat);
+		mat3 boxRotation = mat3(1.0);
 
 		bool res0 = ourIntersectBoxCommon(boxCenter, boxRadius, invBoxRadius, boxRotation, rayOrigin, rayDirection, invRayDirection, distanceToHit, normalAtHit, rayCanStartInBox, oriented);
 		if (res0)
@@ -237,12 +209,7 @@ vec4 fromOctreePoints()
 			// this should be related to the depth to hit value, not the depth to the 2D sprite
 
 			
-			float T1 = projection[2][2];
-			float T2 = projection[3][2];
-			float E1 = projection[2][3];
 
-
-			float Cw = T2 / (distanceToHit - (T1 / E1));
 			
 
 			//gl_FragDepth = vec3(distanceToHit).z * Cw;
@@ -250,21 +217,37 @@ vec4 fromOctreePoints()
 			//gl_FragDepth = gl_FragCoord.z;
 
 
-					res = vec4(smoothstep(-1.0, 1.0, worldspace.xyz), 1.0f);
+			res = vec4(smoothstep(-1.0, 1.0, worldspace.xyz), 1.0f);
 			//res = vec4(gl_FragDepth.xxx, 1.0);
 		}
-		else{
+		else
+		{
 			//res = vec4(vec3(1,1,0), 1.0f);// * (ambient + diffuse + specular);
 			discard;
 		}
 
 
+		// ambient
+	float ambientStrength = 0.1f;
+	vec3 ambient = ambientStrength * vec3(1.0f);
+// diffuse
+	vec3 norm = normalize(abs(normalAtHit));
+	vec3 lightDir = normalize(lightPos - FragPos);
+	float diff = max(dot(norm, lightDir), 0.0);
+	vec3 diffuse = diff * lightColor;
+//specular
+	float specularStrength = 0.5;
+	vec3 viewDir = normalize(view[3].xyz - FragPos);
+	vec3 reflectDir = reflect(-lightDir, norm);
+	vec3 halfwayDir = normalize(lightDir + viewDir);  
 
-    }
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+	vec3 specular = specularStrength * spec * lightColor;
+    
 
 
 	
-	return vec4(res); 
+	return vec4(res.xyz * (ambient + diffuse + specular), 1.0f); 
 
 }
 
@@ -275,7 +258,7 @@ vec4 fromOctreeTriangles()
 	float ambientStrength = 0.1f;
 	vec3 ambient = ambientStrength * vec3(1.0f);
 // diffuse
-	vec3 norm = normalize(Normal);
+	vec3 norm = normalize(abs(Normal));
 	vec3 lightDir = normalize(lightPos - FragPos);
 	float diff = max(dot(norm, lightDir), 0.0);
 	vec3 diffuse = diff * lightColor;
@@ -283,6 +266,7 @@ vec4 fromOctreeTriangles()
 	float specularStrength = 0.5;
 	vec3 viewDir = normalize(view[3].xyz - FragPos);
 	vec3 reflectDir = reflect(-lightDir, norm);
+
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
 	vec3 specular = specularStrength * spec * lightColor;
 
@@ -292,7 +276,7 @@ vec4 fromOctreeTriangles()
 
 		gl_FragDepth = gl_FragCoord.z;
 
-		res = vec4(smoothstep(-1.0,1.0,TexCoord3D), 1.0f);// * (ambient + diffuse + specular),1.0f);
+		res = vec4(smoothstep(-1.0,1.0,TexCoord3D) * (ambient + diffuse + specular), 1.0f);// * (ambient + diffuse + specular),1.0f);
 	
 
 

@@ -630,8 +630,8 @@ void Render::render()
 	}
 
 	
-	m_lightPos.x = 10000.0f * cos(camAngle * 0.0174533f);
-	m_lightPos.z = 10000.0f * sin(camAngle * 0.0174533f);
+	//m_lightPos.x = 10.0f * cos(camAngle * 0.0174533f);
+	//m_lightPos.z = 10.0f * sin(camAngle * 0.0174533f);
 
 	glm::mat4 rotMat = glm::rotate(glm::mat4(1.0f), glm::radians(camAngle), glm::vec3(0, 0, 1));
 
