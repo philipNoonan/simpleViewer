@@ -1,7 +1,7 @@
 #version 430 core
 const float PI = 3.1415926535897932384626433832795f;
 
-layout (depth_less) out float gl_FragDepth;
+//layout (depth_less) out float gl_FragDepth; // NSIGHT DOESNT LIKE THIS LINE
 
 float max3 (vec3 v) {
   return max (max (v.x, v.y), v.z);
