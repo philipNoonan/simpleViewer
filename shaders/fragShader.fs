@@ -40,6 +40,10 @@ uniform vec3 sliceVals;
 uniform vec3 lightPos;
 vec3 lightColor = vec3(1.0f);
 
+subroutine vec4 getColor();
+subroutine uniform getColor getColorSelection;
+
+
 
 uniform struct Light {
 	vec3 position;
@@ -94,7 +98,7 @@ bool ourIntersectBoxCommon(vec3 boxCenter, vec3 boxRadius, vec3 boxInvRadius, ma
     // Perform all three ray-box tests and cast to 0 or 1 on each axis. 
     // Use a macro to eliminate the redundant code (no efficiency boost from doing so, of course!)
     // Could be written with 
-#   define TEST(U, VW)\
+#define TEST(U, VW)\
          /* Is there a hit on this axis in front of the origin? Use multiplication instead of && for a small speedup */\
          (distanceToPlane.U >= 0.0) && \
          /* Is that hit within the face of the box? */\
@@ -104,7 +108,7 @@ bool ourIntersectBoxCommon(vec3 boxCenter, vec3 boxRadius, vec3 boxInvRadius, ma
 
     // CMOV chain that guarantees exactly one element of sgn is preserved and that the value has the right sign
     sgn = test.x ? vec3(sgn.x, 0.0, 0.0) : (test.y ? vec3(0.0, sgn.y, 0.0) : vec3(0.0, 0.0, test.z ? -sgn.z : 0.0));    
-#   undef TEST
+#undef TEST
         
     // At most one element of sgn is non-zero now. That element carries the negative sign of the 
     // ray direction as well. Notice that we were able to drop storage of the test vector from registers,
@@ -131,8 +135,7 @@ bool ourIntersectBoxCommon(vec3 boxCenter, vec3 boxRadius, vec3 boxInvRadius, ma
 
 
 
-subroutine vec4 getColor();
-subroutine uniform getColor getColorSelection;
+
 
 subroutine(getColor)
 vec4 fromVolume()
@@ -308,6 +311,9 @@ vec4 fromMarchingCubesTriangles()
 		return vec4(norm * (ambient + diffuse),1.0f);
 		
 }
+
+
+
 
 subroutine(getColor)
 vec4 fromTexture2D()

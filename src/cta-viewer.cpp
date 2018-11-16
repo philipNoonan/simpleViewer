@@ -296,7 +296,7 @@ int main()
 			performVoxelization ^= 1;
 			if (performVoxelization)
 			{
-				loadBinarySTLToVertArray("resources/vesselsBin.stl", meshData);
+				loadBinarySTLToVertArray("resources/brainBin.stl", meshData);
 				getBoundingBox(meshData, boxTop, boxBot);
 				float longestEdge = boxTop[0] - boxBot[0];
 				if (boxTop[1] - boxBot[1] > longestEdge) longestEdge = boxTop[1] - boxBot[1];
