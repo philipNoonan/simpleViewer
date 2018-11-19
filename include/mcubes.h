@@ -115,6 +115,7 @@ private:
 	GLuint m_totalSumID;
 	GLuint m_baseLevelID;
 	GLuint m_isoLevel_TravID;
+	GLuint m_scaleVecID;
 
 	// prefix sum
 	GLuint m_prefixSumSubroutineID;

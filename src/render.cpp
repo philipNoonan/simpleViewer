@@ -242,6 +242,7 @@ void Render::setLocations()
 	m_levelID = glGetUniformLocation(renderProg.getHandle(), "level");
 	m_lightPosID = glGetUniformLocation(renderProg.getHandle(), "lightPos");
 
+	m_marchingCubesScaleFactorID = glGetUniformLocation(renderProg.getHandle(), "marchingCubesScaleFactor");
 
 
 	m_positionSelectionRoutineID = glGetSubroutineUniformLocation(renderProg.getHandle(), GL_VERTEX_SHADER, "getPositionSelection");
@@ -588,6 +589,8 @@ void Render::render()
 	glm::mat4 projection = m_camera->matrices.perspective;
 	glm::mat4 view = m_camera->matrices.view;
 
+	// GET THE FRUSTRUM FOR CULLING
+
 	//glm::mat4 m_view512 = glm::lookAt(
 	//	glm::vec3(0, 0, -m_zoom),           // Camera is here
 	//	glm::vec3(0, 0, 0), // and looks here : at the same position, plus "direction"
@@ -666,6 +669,9 @@ void Render::render()
 		glBindBuffer(GL_ARRAY_BUFFER, m_bufferNorm);
 
 		//glBindBuffer(GL_ARRAY_BUFFER, m_bufferOctlist);
+
+		glUniform1f(m_marchingCubesScaleFactorID, 0.25f);
+
 		glUniformMatrix4fv(m_MvpID, 1, GL_FALSE, glm::value_ptr(MVP));
 		glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, &m_standardTextureMCID);
 		glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, &m_fromMarchingCubesTrianglesID);

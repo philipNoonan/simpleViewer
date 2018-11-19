@@ -52,6 +52,7 @@ void MCubes::setLocations()
 	m_totalSumID = glGetUniformLocation(traverseHistoPyramidsProg.getHandle(), "totalSum");
 	m_isoLevel_TravID = glGetUniformLocation(traverseHistoPyramidsProg.getHandle(), "isoLevel");
 
+	m_scaleVecID = glGetUniformLocation(traverseHistoPyramidsProg.getHandle(), "scaleVec");
 
 	//// PREFIX SUMS
 	//m_prefixSumSubroutineID = glGetSubroutineUniformLocation(prefixSumProg.getHandle(), GL_COMPUTE_SHADER, "getPrefixSum");
@@ -92,10 +93,10 @@ void MCubes::allocateTextures()
 
 	//m_testVolumeTexture = GLHelper::createTexture(m_testVolumeTexture, GL_TEXTURE_3D, 10, 512, 512, 512, GL_R32F);
 
-	//texture views
+	//texture views, this creates a texture handle that is linked to the whole pyramid storage of the OG histopyramid, but thinks it is RG16F format
 	// https://www.khronos.org/opengl/wiki/Texture_Storage#Texture_views
 	glGenTextures(1, &m_textureviewHistoPyramid);
-	glTextureView(m_textureviewHistoPyramid, GL_TEXTURE_3D, m_textureHistoPyramid, GL_RG16F, 0, 1, 0, 1);
+	glTextureView(m_textureviewHistoPyramid, GL_TEXTURE_3D, m_textureHistoPyramid, GL_RG16F, 0, 10, 0, 1);
 
 }
 void MCubes::allocateBuffers()
@@ -384,6 +385,9 @@ void MCubes::histoPyramids()
 	glUniformSubroutinesuiv(GL_COMPUTE_SHADER, 1, &m_traverseHPLevelID);
 	glUniform1ui(m_totalSumID, sumData[0]);
 	glUniform1f(m_isoLevel_TravID, m_isoLevel);
+
+	glm:vec2 scaleVec(128.0f, 384.0f);
+	glUniform2fv(m_scaleVecID, 1, glm::value_ptr(scaleVec));
 
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_bufferPos);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_bufferPosEncode);

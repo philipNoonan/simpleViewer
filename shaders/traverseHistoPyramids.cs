@@ -25,6 +25,8 @@ layout(binding = 6) uniform usampler1D offsets3;
 
 layout(binding = 7) uniform sampler3D histoPyramidBaseLevelTexture;
 
+uniform vec2 scaleVec;
+
 
 // buffers 
 //layout(std430, binding = 0) buffer posBuf
@@ -213,20 +215,41 @@ bool traverseHPLevel()
 
         diff = (isoLevel - value0) / (testVal1 - value0);
  
-        const vec3 vertex = mix(vec3(point0.x, point0.y, point0.z), vec3(point1.x, point1.y, point1.z), diff); // * scaing of voxels
+        vec3 vertex = mix(vec3(point0.x, point0.y, point0.z), vec3(point1.x, point1.y, point1.z), diff); // * scaing of voxels
         const vec3 normal = normalize(mix(forwardDifference0, forwardDifference1, diff));
 
+        vertex = (vertex - scaleVec.x) / (scaleVec.y - scaleVec.x) * (1023); // 1023 since we are packing using 10 bits (1024 levels)
 
 
-        posEncode[target * 3 + vertexNr] = uint(vertex.x) << 20 | uint(vertex.y) << 10 | uint(vertex.z);
+
+        // we would like to scale this so that you are not losing precision when we zoom in.
+        // we need to cull verts that are outside of the viewing frustrum, therefore we need to find the viewing frustrum on the CPU then send its coords/plane eq as a uniform to the shader
+        // currently we are always using a dynamic range of 0-1023 (actually its just uints 0 - 511)
+        //posEncode[target * 3 + vertexNr] = uint(vertex.x) << 20 | uint(vertex.y) << 10 | uint(vertex.z);
+        if (vertex.x < 1022 && vertex.y < 1022 && vertex.z < 1022 && vertex.x > 1 && vertex.y > 1 && vertex.z > 1)
+        {
+            posEncode[target * 3 + vertexNr] = uint(vertex.x) << 20 | uint(vertex.y) << 10 | uint(vertex.z);
+            norm[target * 3 + vertexNr] = vec4(normal, 0.0f);
+
+        }
+        else
+        {
+            for (int vertN = 0; vertN < 3; vertN++)
+            {
+                posEncode[target * 3 + vertN] = 0;
+                norm[target * 3 + vertN] = vec4(0.0f);
+            }
+            break;
+
+        }
+
 
         // output normals here if we want to calc it here rather than in vertshader stage
         // norm[target * 3 + vertexNr * 3] = target;
         // norm[target * 3 + vertexNr * 3 + 1] = cubeIndex;
         // norm[target * 3 + vertexNr * 3 + 2] = vertexNr;
-        norm[target * 3 + vertexNr] = vec4(normal, 0.0f);
 
-         ++vertexNr;
+        ++vertexNr;
     }
 
 

@@ -65,7 +65,7 @@ struct Ray {
 bool ourIntersectBoxCommon(vec3 boxCenter, vec3 boxRadius, vec3 boxInvRadius, mat3 boxRotation, vec3 rayOrigin, vec3 rayDirection, in vec3 _invRayDirection, out float distance, out vec3 normal, const bool rayCanStartInBox, const in bool oriented) {
 
     // Move to the box's reference frame. This is unavoidable and un-optimizable.
-    rayOrigin = boxRotation * (rayOrigin - boxCenter);
+    rayOrigin = (rayOrigin - boxCenter) * boxRotation;
     if (oriented) {
         rayDirection = rayDirection * boxRotation;
     }
@@ -194,7 +194,7 @@ vec4 fromOctreePoints()
 
 		boxShift[3].xyz = -boxCenter;
 
-		mat3 boxRotation = mat3(1.0);
+		mat3 boxRotation = mat3(rotMat);
 
 		bool res0 = ourIntersectBoxCommon(boxCenter, boxRadius, invBoxRadius, boxRotation, rayOrigin, rayDirection, invRayDirection, distanceToHit, normalAtHit, rayCanStartInBox, oriented);
 		if (res0)

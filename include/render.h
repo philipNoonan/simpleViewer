@@ -306,6 +306,7 @@ private:
 	GLuint m_sliceValsID;
 	GLuint m_levelID;
 	GLuint m_lightPosID;
+	GLuint m_marchingCubesScaleFactorID;
 
 	GLuint m_positionSelectionRoutineID;
 	GLuint m_standardTextureID;

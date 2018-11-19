@@ -27,6 +27,8 @@ layout(binding = 6) uniform usampler1D offsets3;
 
 // uniforms
 uniform int hpLevel;
+uniform int bottomLevel;
+
 uniform float isoLevel = 1000.0f;
 uniform uint totalSum;
 
