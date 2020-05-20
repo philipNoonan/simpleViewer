@@ -606,7 +606,7 @@ void Render::render()
 
 	//	m_model = m_model_color;
 
-	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	renderProg.use();
 	glm::mat4 MVP;
 
@@ -652,7 +652,6 @@ void Render::render()
 		glUniformMatrix4fv(m_RotMatID, 1, GL_FALSE, glm::value_ptr(rotMat));
 
 		glUniform1i(m_levelID, m_level);
-
 		glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, 0);
 	}
 	

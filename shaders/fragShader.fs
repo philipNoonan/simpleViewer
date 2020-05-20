@@ -33,7 +33,7 @@ uniform mat4 model;
 
 layout(location = 0) out vec4 color;
 
-uniform int level = 0;
+uniform int level;
 uniform float slice;
 uniform vec3 sliceVals;
 
@@ -140,12 +140,14 @@ bool ourIntersectBoxCommon(vec3 boxCenter, vec3 boxRadius, vec3 boxInvRadius, ma
 subroutine(getColor)
 vec4 fromVolume()
 {
+
 	vec4 tData = textureLod(currentTexture3D, vec3(TexCoord3D.x, TexCoord3D.y, TexCoord3D.z), float(level) );
 	//vec4 tData = imageLoad(volumeData, vec3(TexCoord.x * 512.0f, TexCoord.y * 512.0f, slice));
 	float outfloat = tData.x > 10 ? tData.x * 0.0005f : 0;
 	//float alpha = outfloat > 0.1 ? 1 : 0;
 
 	gl_FragDepth = gl_FragCoord.z;
+
 	return vec4(outfloat.xxx, 1.0);
 
 	//return vec4(1.0, 0.0, 0.0, 1.0);
@@ -327,7 +329,6 @@ vec4 fromTexture2D()
 void main()
 {
 	//vec3 normals = normalize(cross(dFdx(vert4D.xyz), dFdy(vert4D.xyz)));
-
 
 
 	color = getColorSelection();

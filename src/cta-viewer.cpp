@@ -45,7 +45,7 @@ void setVolume()
 
 	mcconfig.gridSize = glm::uvec3(dims[0], dims[1], dims[2]);
 	mcconfig.numVoxels = mcconfig.gridSize.x * mcconfig.gridSize.y * mcconfig.gridSize.z;
-	mcconfig.maxVerts = std::min(mcconfig.gridSize.x * mcconfig.gridSize.y * 128, uint32_t(128 * 128 * 128));
+	mcconfig.maxVerts = std::min(mcconfig.gridSize.x * mcconfig.gridSize.y * 512, uint32_t(512 * 512 * 512));
 
 	mcubes.setConfig(mcconfig);
 
@@ -188,7 +188,7 @@ int main()
 
 
 		ImGui::SetNextWindowPos(ImVec2(32, 32));
-		ImGui::SetNextWindowSize(ImVec2(320, 240), ImGuiSetCond_Always);
+		ImGui::SetNextWindowSize(ImVec2(320, 240));
 		ImGuiWindowFlags window_flags = 0;
 		window_flags |= ImGuiWindowFlags_NoTitleBar;
 		//window_flags |= ImGuiWindowFlags_ShowBorders;
@@ -248,7 +248,7 @@ int main()
 		//}
 
 		float oldIso = m_isoLevel;
-		ImGui::SliderFloat("isolevel", &m_isoLevel, 0.1f, 2000.0f);
+		ImGui::SliderFloat("isolevel", &m_isoLevel, -2000.0f, 2000.0f);
 		if (m_isoLevel != oldIso)
 		{
 			mcubes.setIsolevel(m_isoLevel);

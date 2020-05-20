@@ -136,7 +136,7 @@ void MCubes::allocateBuffers()
 
 	glGenBuffers(1, &m_bufferNorm);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_bufferNorm);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, 512 * 512 * 128 * 3 * sizeof(float), NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, 512 * 512 * 512 * 3 * sizeof(float), NULL, GL_DYNAMIC_DRAW);
 
 	//glGenBuffers(1, &m_bufferPrefixSumByGroup);
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 11, m_bufferPrefixSumByGroup);
@@ -386,7 +386,7 @@ void MCubes::histoPyramids()
 	glUniform1ui(m_totalSumID, sumData[0]);
 	glUniform1f(m_isoLevel_TravID, m_isoLevel);
 
-	glm:vec2 scaleVec(128.0f, 384.0f);
+	glm:vec2 scaleVec(0.0f, 512.0f);
 	glUniform2fv(m_scaleVecID, 1, glm::value_ptr(scaleVec));
 
 	//glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_bufferPos);

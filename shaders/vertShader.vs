@@ -52,7 +52,7 @@ vec4 fromStandardTexture3D()
 subroutine(getPosition)
 vec4 fromStandardTextureMC()
 {
-	vec3 vertPoint = 128.0f + (marchingCubesScaleFactor *  vec3((positionMC & 1072693248) >> 20, (positionMC & 1047552) >> 10, positionMC & 1023));
+	vec3 vertPoint = (vec3((positionMC & 1072693248) >> 20, (positionMC & 1047552) >> 10, positionMC & 1023));
 	Normal = normalMC.xyz;
 	TexCoord3D = vertPoint / 512.0f;
 	return vec4(MVP * vec4((vertPoint / 256.0f) - 1.0f, 1.0f));
